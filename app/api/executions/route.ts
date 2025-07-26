@@ -3,7 +3,7 @@ import { db } from '@/lib/database';
 import { withAuth, withSecurity, withRateLimit, composeMiddleware, AuthenticatedRequest } from '@/lib/middleware';
 import { validateRequestData } from '@/lib/auth';
 
-type ExecutionStatus = 'SUCCESS' | 'FAILED' | 'RUNNING' | 'PENDING';
+type ExecutionStatus = 'SUCCESS' | 'FAILED' | 'RUNNING';
 
 /**
  * @swagger
@@ -211,7 +211,7 @@ async function createExecutionHandler(request: AuthenticatedRequest): Promise<Ne
 
     const execution = await db.createExecution({
       agentId: body.agentId,
-      status: body.status as ExecutionStatus || 'PENDING',
+      status: body.status as ExecutionStatus || 'RUNNING',
       result: body.result,
       error: body.error,
       logs: body.logs,

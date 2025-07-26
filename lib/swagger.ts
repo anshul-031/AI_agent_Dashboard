@@ -143,7 +143,7 @@ const options = {
             },
             status: {
               type: 'string',
-              enum: ['SUCCESS', 'FAILED', 'RUNNING', 'PENDING'],
+              enum: ['SUCCESS', 'FAILED', 'RUNNING'],
               example: 'SUCCESS',
             },
             startTime: {

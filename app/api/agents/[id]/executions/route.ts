@@ -21,7 +21,7 @@ import { withAuth, withSecurity, withRateLimit, composeMiddleware, Authenticated
  *         name: status
  *         schema:
  *           type: string
- *           enum: [success, failed, running, pending]
+ *           enum: [success, failed, running]
  *         description: Filter by execution status
  *       - in: query
  *         name: startTimeFrom
@@ -124,8 +124,7 @@ async function getAgentExecutionsHandler(
       const statusMap: { [key: string]: string } = {
         'success': 'SUCCESS',
         'failed': 'FAILED',
-        'running': 'RUNNING',
-        'pending': 'PENDING'
+        'running': 'RUNNING'
       };
       filters.status = statusMap[status] || status.toUpperCase();
     }

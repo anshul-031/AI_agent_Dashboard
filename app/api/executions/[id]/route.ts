@@ -80,7 +80,7 @@ async function getExecutionHandler(
  *             properties:
  *               status:
  *                 type: string
- *                 enum: [SUCCESS, FAILED, RUNNING, PENDING]
+ *                 enum: [SUCCESS, FAILED, RUNNING]
  *               result:
  *                 type: string
  *               error:

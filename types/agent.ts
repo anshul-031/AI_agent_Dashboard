@@ -1,4 +1,5 @@
 import { type AgentStatus } from '@/lib/constants';
+import { type ExecutionStatus } from '@/lib/constants';
 
 export interface Agent {
   id: string
@@ -24,7 +25,7 @@ export interface Agent {
 export interface Execution {
   id: string
   agentId: string
-  status: 'success' | 'failed' | 'running' | 'pending'
+  status: ExecutionStatus
   startTime: string
   endTime?: string
   result?: string

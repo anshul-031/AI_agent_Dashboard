@@ -115,7 +115,7 @@ export const mockExecutions: Execution[] = [
   {
     id: 'exec-1-001',
     agentId: '1',
-    status: 'success',
+    status: 'SUCCESS',
     startTime: '2024-01-20T14:30:00Z',
     endTime: '2024-01-20T14:32:15Z',
     result: 'Processed 45 customer inquiries, escalated 3 to human agents',
@@ -140,7 +140,7 @@ export const mockExecutions: Execution[] = [
   {
     id: 'exec-1-002',
     agentId: '1',
-    status: 'success',
+    status: 'SUCCESS',
     startTime: '2024-01-20T13:30:00Z',
     endTime: '2024-01-20T13:31:45Z',
     result: 'Processed 32 customer inquiries, escalated 1 to human agents',
@@ -160,7 +160,7 @@ export const mockExecutions: Execution[] = [
   {
     id: 'exec-1-003',
     agentId: '1',
-    status: 'failed',
+    status: 'FAILED',
     startTime: '2024-01-20T12:30:00Z',
     endTime: '2024-01-20T12:31:20Z',
     error: 'Connection timeout to customer database',
@@ -180,7 +180,7 @@ export const mockExecutions: Execution[] = [
   {
     id: 'exec-2-001',
     agentId: '2',
-    status: 'running',
+    status: 'RUNNING',
     startTime: '2024-01-20T16:00:00Z',
     logs: [
       {
@@ -203,7 +203,7 @@ export const mockExecutions: Execution[] = [
   {
     id: 'exec-2-002',
     agentId: '2',
-    status: 'success',
+    status: 'SUCCESS',
     startTime: '2024-01-20T14:00:00Z',
     endTime: '2024-01-20T15:45:30Z',
     result: 'Generated insights report for Q4 sales data - identified 3 key trends',
@@ -228,7 +228,7 @@ export const mockExecutions: Execution[] = [
   {
     id: 'exec-3-001',
     agentId: '3',
-    status: 'success',
+    status: 'SUCCESS',
     startTime: '2024-01-20T12:00:00Z',
     endTime: '2024-01-20T12:05:20Z',
     result: 'Moderated 127 content items, flagged 8 for review',
@@ -253,7 +253,7 @@ export const mockExecutions: Execution[] = [
   {
     id: 'exec-4-001',
     agentId: '4',
-    status: 'pending',
+    status: 'RUNNING',
     startTime: '2024-01-20T17:00:00Z',
     logs: [
       {
@@ -267,7 +267,7 @@ export const mockExecutions: Execution[] = [
   {
     id: 'exec-1-004',
     agentId: '1',
-    status: 'success',
+    status: 'SUCCESS',
     startTime: '2024-01-19T09:15:00Z',
     endTime: '2024-01-19T09:18:30Z',
     result: 'Processed 28 customer inquiries, escalated 2 to human agents',
@@ -292,7 +292,7 @@ export const mockExecutions: Execution[] = [
   {
     id: 'exec-1-005',
     agentId: '1',
-    status: 'failed',
+    status: 'FAILED',
     startTime: '2024-01-18T16:45:00Z',
     endTime: '2024-01-18T16:46:15Z',
     error: 'API rate limit exceeded for external service',
@@ -313,7 +313,7 @@ export const mockExecutions: Execution[] = [
   {
     id: 'exec-2-003',
     agentId: '2',
-    status: 'failed',
+    status: 'FAILED',
     startTime: '2024-01-19T10:00:00Z',
     endTime: '2024-01-19T10:15:45Z',
     error: 'Insufficient memory to process large dataset',
@@ -338,7 +338,7 @@ export const mockExecutions: Execution[] = [
   {
     id: 'exec-2-004',
     agentId: '2',
-    status: 'success',
+    status: 'SUCCESS',
     startTime: '2024-01-18T08:30:00Z',
     endTime: '2024-01-18T09:45:20Z',
     result: 'Analyzed user engagement patterns - generated recommendations for 5 product categories',
@@ -369,7 +369,7 @@ export const mockExecutions: Execution[] = [
   {
     id: 'exec-3-002',
     agentId: '3',
-    status: 'success',
+    status: 'SUCCESS',
     startTime: '2024-01-19T14:30:00Z',
     endTime: '2024-01-19T14:33:45Z',
     result: 'Moderated 89 content items, flagged 12 for human review',
@@ -399,7 +399,7 @@ export const mockExecutions: Execution[] = [
   {
     id: 'exec-3-003',
     agentId: '3',
-    status: 'running',
+    status: 'RUNNING',
     startTime: '2024-01-20T18:00:00Z',
     logs: [
       {
@@ -423,7 +423,7 @@ export const mockExecutions: Execution[] = [
   {
     id: 'exec-4-002',
     agentId: '4',
-    status: 'failed',
+    status: 'FAILED',
     startTime: '2024-01-19T11:00:00Z',
     endTime: '2024-01-19T11:02:30Z',
     error: 'CRM integration failure - authentication expired',
@@ -443,7 +443,7 @@ export const mockExecutions: Execution[] = [
   {
     id: 'exec-4-003',
     agentId: '4',
-    status: 'success',
+    status: 'SUCCESS',
     startTime: '2024-01-18T15:30:00Z',
     endTime: '2024-01-18T15:35:20Z',
     result: 'Qualified 18 leads, identified 6 high-priority prospects for immediate follow-up',
@@ -474,7 +474,7 @@ export const mockExecutions: Execution[] = [
   {
     id: 'exec-5-001',
     agentId: '5',
-    status: 'success',
+    status: 'SUCCESS',
     startTime: '2024-01-17T07:00:00Z',
     endTime: '2024-01-17T07:12:45Z',
     result: 'Monitored 450 SKUs, triggered 8 automatic reorders, flagged 3 supplier issues',
@@ -504,7 +504,7 @@ export const mockExecutions: Execution[] = [
   {
     id: 'exec-5-002',
     agentId: '5',
-    status: 'failed',
+    status: 'FAILED',
     startTime: '2024-01-16T07:00:00Z',
     endTime: '2024-01-16T07:05:30Z',
     error: 'ERP system unavailable - unable to fetch current inventory levels',
@@ -530,7 +530,7 @@ export const mockExecutions: Execution[] = [
   {
     id: 'exec-6-001',
     agentId: '6',
-    status: 'success',
+    status: 'SUCCESS',
     startTime: '2024-01-19T13:00:00Z',
     endTime: '2024-01-19T13:25:15Z',
     result: 'Optimized 3 email campaigns, improved open rates by 12%, increased CTR by 8%',

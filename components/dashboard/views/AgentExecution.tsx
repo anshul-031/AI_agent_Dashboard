@@ -39,6 +39,7 @@ import { useAgentExecutions, useExecutionLogs } from '@/hooks/use-database'
 import { Execution } from '@/types/agent'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { DateTimePicker } from '@/components/ui/date-picker'
+import { EXECUTION_STATUS } from '@/lib/constants'
 
 interface AgentExecutionProps {
   agentId: string | null
@@ -62,9 +63,9 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
     };
   };
   
-  // Function to generate random status
-  const getRandomStatus = (): 'success' | 'failed' | 'running' | 'pending' => {
-    const statuses: ('success' | 'failed' | 'running' | 'pending')[] = ['success', 'failed', 'running', 'pending']
+  // Function to generate random status using enum values
+  const getRandomStatus = () => {
+    const statuses = Object.values(EXECUTION_STATUS)
     const randomIndex = Math.floor(Math.random() * statuses.length)
     return statuses[randomIndex]
   }
@@ -92,47 +93,42 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
   })
 
   const executionStats = useMemo(() => {
-    if (!executions.length) return { total: 0, success: 0, failed: 0, running: 0, pending: 0 }
+    if (!executions.length) return { total: 0, success: 0, failed: 0, running: 0 }
     
-    // Helper function to normalize status for comparison
-    const normalizeStatus = (status: string) => status.toLowerCase()
+    // Helper function to normalize status for comparison with enum values
+    const normalizeStatus = (status: string) => status.toUpperCase()
     
     return {
       total: executions.length,
-      success: executions.filter(e => normalizeStatus(e.status) === 'success').length,
-      failed: executions.filter(e => normalizeStatus(e.status) === 'failed').length,
-      running: executions.filter(e => normalizeStatus(e.status) === 'running').length,
-      pending: executions.filter(e => normalizeStatus(e.status) === 'pending').length
+      success: executions.filter(e => normalizeStatus(e.status) === EXECUTION_STATUS.SUCCESS).length,
+      failed: executions.filter(e => normalizeStatus(e.status) === EXECUTION_STATUS.FAILED).length,
+      running: executions.filter(e => normalizeStatus(e.status) === EXECUTION_STATUS.RUNNING).length
     }
   }, [executions])
 
   const getStatusIcon = (status: Execution['status']) => {
-    const normalizedStatus = status?.toLowerCase()
+    const normalizedStatus = status?.toUpperCase()
     switch (normalizedStatus) {
-      case 'success':
+      case EXECUTION_STATUS.SUCCESS:
         return <CheckCircle2 className="h-4 w-4 text-green-500" />
-      case 'failed':
+      case EXECUTION_STATUS.FAILED:
         return <XCircle className="h-4 w-4 text-red-500" />
-      case 'running':
+      case EXECUTION_STATUS.RUNNING:
         return <RefreshCw className="h-4 w-4 text-blue-500 animate-spin" />
-      case 'pending':
-        return <Clock className="h-4 w-4 text-yellow-500" />
       default:
         return <AlertCircle className="h-4 w-4 text-gray-500" />
     }
   }
 
   const getStatusVariant = (status: Execution['status']) => {
-    const normalizedStatus = status?.toLowerCase()
+    const normalizedStatus = status?.toUpperCase()
     switch (normalizedStatus) {
-      case 'success':
+      case EXECUTION_STATUS.SUCCESS:
         return 'default'
-      case 'failed':
+      case EXECUTION_STATUS.FAILED:
         return 'destructive'
-      case 'running':
+      case EXECUTION_STATUS.RUNNING:
         return 'default'
-      case 'pending':
-        return 'secondary'
       default:
         return 'outline'
     }
@@ -257,7 +253,7 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
                   headers: getAuthHeaders(),
                   body: JSON.stringify({
                     agentId: agentId,
-                    status: randomStatus.toUpperCase()
+                    status: randomStatus // Already uppercase from enum
                   })
                 });
                 
@@ -361,15 +357,13 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
           
           <Card className="border-l-4 border-l-blue-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-blue-700">Running/Pending</CardTitle>
-              <RefreshCw className="h-4 w-4 text-blue-500" />
+              <CardTitle className="text-sm font-medium text-blue-700">Running</CardTitle>
+              <RefreshCw className="h-4 w-4 text-blue-500 animate-spin" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {executionStats.running + executionStats.pending}
-              </div>
+              <div className="text-2xl font-bold text-blue-600">{executionStats.running}</div>
               <p className="text-xs text-blue-600 mt-1">
-                {executionStats.running} running, {executionStats.pending} pending
+                Currently executing
               </p>
             </CardContent>
           </Card>
@@ -404,13 +398,6 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
                     title={`${executionStats.running} running (${Math.round((executionStats.running / executionStats.total) * 100)}%)`}
                   />
                 )}
-                {executionStats.pending > 0 && (
-                  <div 
-                    className="bg-yellow-500 h-full"
-                    style={{ width: `${(executionStats.pending / executionStats.total) * 100}%` }}
-                    title={`${executionStats.pending} pending (${Math.round((executionStats.pending / executionStats.total) * 100)}%)`}
-                  />
-                )}
               </div>
               <div className="flex justify-between text-xs text-gray-500 mt-2">
                 <span className="flex items-center">
@@ -424,10 +411,6 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
                 <span className="flex items-center">
                   <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
                   Running ({executionStats.running})
-                </span>
-                <span className="flex items-center">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full mr-1"></div>
-                  Pending ({executionStats.pending})
                 </span>
               </div>
             </CardContent>
@@ -455,7 +438,6 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
                   <SelectItem value="success">Success</SelectItem>
                   <SelectItem value="failed">Failed</SelectItem>
                   <SelectItem value="running">Running</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
                 </SelectContent>
               </Select>
               
@@ -566,7 +548,7 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
                               headers: getAuthHeaders(),
                               body: JSON.stringify({
                                 agentId: agentId,
-                                status: randomStatus.toUpperCase()
+                                status: randomStatus // Already uppercase from enum
                               })
                             });
                             
@@ -710,7 +692,7 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
                               headers: getAuthHeaders(),
                               body: JSON.stringify({
                                 agentId: agentId,
-                                status: randomStatus.toUpperCase()
+                                status: randomStatus // Already uppercase from enum
                               })
                             });
                             

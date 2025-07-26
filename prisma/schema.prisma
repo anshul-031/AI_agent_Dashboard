@@ -84,7 +84,6 @@ enum ExecutionStatus {
   SUCCESS
   FAILED
   RUNNING
-  PENDING
 }
 
 enum UserRole {

@@ -3,7 +3,7 @@ import { Agent, Execution, Flowchart } from '@/types/agent';
 import { AgentStatus } from '@prisma/client';
 import { AGENT_STATUS } from '@/lib/constants';
 
-type ExecutionStatus = 'SUCCESS' | 'FAILED' | 'RUNNING' | 'PENDING';
+type ExecutionStatus = 'SUCCESS' | 'FAILED' | 'RUNNING';
 
 export class DatabaseService {
   private flowchartService: any = null;

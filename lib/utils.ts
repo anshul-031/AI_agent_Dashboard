@@ -39,8 +39,6 @@ export function getStatusColor(status: string): string {
     case 'failed':
     case 'error':
       return 'text-red-600 bg-red-100';
-    case 'pending':
-      return 'text-yellow-600 bg-yellow-100';
     case 'inactive':
     case 'paused':
       return 'text-gray-600 bg-gray-100';
@@ -59,8 +57,6 @@ export function getStatusIcon(status: string): string {
     case 'failed':
     case 'error':
       return '✗';
-    case 'pending':
-      return '⏳';
     case 'inactive':
     case 'paused':
       return '⏸';

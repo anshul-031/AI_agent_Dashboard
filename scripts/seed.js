@@ -222,7 +222,7 @@ async function seedPostgreSQL() {
       prisma.execution.create({
         data: {
           agentId: agents[3].id,
-          status: 'PENDING',
+          status: 'RUNNING',
           startTime: new Date('2024-01-20T17:00:00Z'),
           triggeredById: users[1].id,
           logs: [

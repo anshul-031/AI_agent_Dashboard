@@ -19,8 +19,7 @@ export const AGENT_STATUS_OPTIONS = [
 export const EXECUTION_STATUS = {
   SUCCESS: 'SUCCESS',
   FAILED: 'FAILED', 
-  RUNNING: 'RUNNING',
-  PENDING: 'PENDING'
+  RUNNING: 'RUNNING'
 } as const;
 
 export type ExecutionStatus = typeof EXECUTION_STATUS[keyof typeof EXECUTION_STATUS];
