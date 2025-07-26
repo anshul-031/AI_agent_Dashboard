@@ -1,0 +1,68 @@
+// This is your Prisma schema file for PostgreSQL
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Agent {
+  id            String   @id @default(cuid())
+  name          String
+  description   String
+  status        AgentStatus
+  category      String
+  createdAt     DateTime @default(now())
+  lastExecution DateTime?
+  executionCount Int     @default(0)
+  configuration Json?
+  
+  // Relations
+  executions    Execution[]
+  
+  @@map("agents")
+}
+
+model Execution {
+  id        String          @id @default(cuid())
+  agentId   String
+  status    ExecutionStatus
+  startTime DateTime        @default(now())
+  endTime   DateTime?
+  result    String?
+  error     String?
+  logs      Json?           // Store execution logs as JSON
+  
+  // Relations
+  agent     Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  
+  @@map("executions")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("users")
+}
+
+enum AgentStatus {
+  ACTIVE
+  INACTIVE
+  RUNNING
+  PAUSED
+}
+
+enum ExecutionStatus {
+  SUCCESS
+  FAILED
+  RUNNING
+  PENDING
+}

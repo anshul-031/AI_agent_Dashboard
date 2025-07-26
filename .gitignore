@@ -1,36 +1,159 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Dependencies
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# local env files
+# Build output
+dist/
+.next/
+out/
+.vercel/
+next.config.js
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE settings
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Misc
+.DS_Store
 .env
-.env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# vercel
-.vercel
+# Next.js specific
+.next/cache/
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Testing
+coverage/
+*.test.ts
+*.spec.ts
+*.test.js
+*.spec.js
+
+# Docker
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+._*
+
+# Editor directories and files
+.idea/
+.project
+.classpath
+.settings/
+*.iml
+*.ipr
+*.iws
+
+# Build files
+dist/
+build/
+
+# Logs
+*.log
+
+# Runtime
+*.pid
+*.seed
+*.lock
+
+# Security
+*.pem
+*.key
+
+# Temporary files
+*.tmp
+*.temp
+
+# Cache
+.cache/
+cache/
+
+# Secrets
+.secret
+secrets.json
+
+# Credentials
+credentials.json
+
+# Deployment
+.deployment
+deploy.log
+
+# CI/CD
+.gitlab-ci.yml
+.github/workflows/
+
+# Node modules
+node_modules/
+
+# npm
+npm-debug.log*
+.npm
+
+# Yarn
+yarn-debug.log*
+yarn-error.log*
+.yarnrc.yml
+.yarn/
+
+# pnpm
+pnpm-debug.log*
+.pnpmfile.cjs
+.pnpm-state.json
+
+# Build artifacts
+dist/
+build/
+out/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Linux
+.Trash-*
