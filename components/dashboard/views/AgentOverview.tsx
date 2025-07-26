@@ -31,6 +31,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { CreateAgentModal } from '../CreateAgentModal'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useToast } from '@/hooks/use-toast'
@@ -67,7 +78,9 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
   const [agents, setAgents] = useState<Agent[]>([])
   const [loading, setLoading] = useState(true)
   const [createModalOpen, setCreateModalOpen] = useState(false)
-  const { token } = useAuth()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [agentToDelete, setAgentToDelete] = useState<{ id: string; name: string } | null>(null)
+  const { token, user } = useAuth()
   const { toast } = useToast()
 
   const fetchAgents = useCallback(async (filters?: {
@@ -111,6 +124,74 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
       setLoading(false)
     }
   }, [token, toast])
+
+  const deleteAgent = useCallback(async (agentId: string, agentName: string) => {
+    if (!token) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to delete an agent",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/agents/${agentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        
+        // Handle specific error cases
+        if (response.status === 403) {
+          throw new Error('You do not have permission to delete agents. Admin role required.')
+        } else if (response.status === 404) {
+          throw new Error('Agent not found or has already been deleted.')
+        } else {
+          throw new Error(errorData.error || 'Failed to delete agent')
+        }
+      }
+
+      toast({
+        title: "Agent deleted successfully",
+        description: `${agentName} has been removed from your agents.`
+      })
+
+      // Refresh the agents list
+      fetchAgents({
+        search: searchTerm,
+        status: statusFilter,
+        category: categoryFilter
+      })
+
+      // Close dialog and reset state
+      setDeleteDialogOpen(false)
+      setAgentToDelete(null)
+
+    } catch (error) {
+      console.error('Delete agent error:', error)
+      toast({
+        title: "Failed to delete agent",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive"
+      })
+    }
+  }, [token, toast, fetchAgents, searchTerm, statusFilter, categoryFilter])
+
+  const handleDeleteClick = (agentId: string, agentName: string) => {
+    setAgentToDelete({ id: agentId, name: agentName })
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = () => {
+    if (agentToDelete) {
+      deleteAgent(agentToDelete.id, agentToDelete.name)
+    }
+  }
 
   useEffect(() => {
     if (token) {
@@ -338,9 +419,17 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>Edit Agent</DropdownMenuItem>
                         <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
-                          Delete
-                        </DropdownMenuItem>
+                        {user?.role === 'admin' && (
+                          <DropdownMenuItem 
+                            className="text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteClick(agent.id, agent.name)
+                            }}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -392,6 +481,27 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
           category: categoryFilter
         })}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Agent</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &ldquo;{agentToDelete?.name}&rdquo;? This action cannot be undone.
+              All associated executions and flowcharts will also be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setAgentToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Agent
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
