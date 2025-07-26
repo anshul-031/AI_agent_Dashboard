@@ -23,7 +23,9 @@ import {
   Pause,
   Play,
   MoreHorizontal,
-  RefreshCw
+  RefreshCw,
+  Power,
+  PowerOff
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -31,6 +33,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,6 +73,11 @@ interface Agent {
   lastExecution: string | null
   executionCount: number
   configuration: any
+  createdBy?: {
+    id: string
+    name: string
+    email: string
+  }
 }
 
 interface AgentOverviewProps {
@@ -75,6 +88,8 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [createdByFilter, setCreatedByFilter] = useState<string>('all')
+  const [enabledFilter, setEnabledFilter] = useState<string>('all')
   const [agents, setAgents] = useState<Agent[]>([])
   const [loading, setLoading] = useState(true)
   const [createModalOpen, setCreateModalOpen] = useState(false)
@@ -87,6 +102,8 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
     search?: string;
     status?: string;
     category?: string;
+    createdBy?: string;
+    enabled?: string;
   }) => {
     if (!token) return
     
@@ -98,6 +115,8 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
       if (filters?.search) params.append('search', filters.search)
       if (filters?.status && filters.status !== 'all') params.append('status', filters.status)
       if (filters?.category && filters.category !== 'all') params.append('category', filters.category)
+      if (filters?.createdBy && filters.createdBy !== 'all') params.append('createdBy', filters.createdBy)
+      if (filters?.enabled && filters.enabled !== 'all') params.append('enabled', filters.enabled)
       
       const url = `/api/agents${params.toString() ? `?${params.toString()}` : ''}`
       
@@ -165,7 +184,9 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
       fetchAgents({
         search: searchTerm,
         status: statusFilter,
-        category: categoryFilter
+        category: categoryFilter,
+        createdBy: createdByFilter,
+        enabled: enabledFilter
       })
 
       // Close dialog and reset state
@@ -180,7 +201,67 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
         variant: "destructive"
       })
     }
-  }, [token, toast, fetchAgents, searchTerm, statusFilter, categoryFilter])
+  }, [token, toast, fetchAgents, searchTerm, statusFilter, categoryFilter, createdByFilter, enabledFilter])
+
+  const toggleAgentEnabled = useCallback(async (agentId: string, agentName: string, currentEnabled: boolean) => {
+    if (!token) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to modify an agent",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/agents/${agentId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          enabled: !currentEnabled
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        
+        // Handle specific error cases
+        if (response.status === 403) {
+          throw new Error('You do not have permission to modify agents. Operator role required.')
+        } else if (response.status === 404) {
+          throw new Error('Agent not found.')
+        } else {
+          throw new Error(errorData.error || 'Failed to update agent')
+        }
+      }
+
+      const newStatus = !currentEnabled ? 'enabled' : 'disabled'
+      toast({
+        title: `Agent ${newStatus} successfully`,
+        description: `${agentName} has been ${newStatus}.`
+      })
+
+      // Refresh the agents list
+      fetchAgents({
+        search: searchTerm,
+        status: statusFilter,
+        category: categoryFilter,
+        createdBy: createdByFilter,
+        enabled: enabledFilter
+      })
+
+    } catch (error) {
+      console.error('Toggle agent error:', error)
+      toast({
+        title: "Failed to update agent",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive"
+      })
+    }
+  }, [token, toast, fetchAgents, searchTerm, statusFilter, categoryFilter, createdByFilter, enabledFilter])
 
   const handleDeleteClick = (agentId: string, agentName: string) => {
     setAgentToDelete({ id: agentId, name: agentName })
@@ -205,12 +286,14 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
       fetchAgents({
         search: searchTerm,
         status: statusFilter,
-        category: categoryFilter
+        category: categoryFilter,
+        createdBy: createdByFilter,
+        enabled: enabledFilter
       })
     }, 300) // 300ms debounce
 
     return () => clearTimeout(timeoutId)
-  }, [searchTerm, statusFilter, categoryFilter, fetchAgents])
+  }, [searchTerm, statusFilter, categoryFilter, createdByFilter, enabledFilter, fetchAgents])
 
   const handleStatusFilterChange = (value: string) => {
     setStatusFilter(value)
@@ -218,6 +301,14 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
 
   const handleCategoryFilterChange = (value: string) => {
     setCategoryFilter(value)
+  }
+
+  const handleCreatedByFilterChange = (value: string) => {
+    setCreatedByFilter(value)
+  }
+
+  const handleEnabledFilterChange = (value: string) => {
+    setEnabledFilter(value)
   }
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -255,12 +346,15 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
       total: agents.length,
       running: agents.filter(a => a.status === AGENT_STATUS.RUNNING).length,
       idle: agents.filter(a => a.status === AGENT_STATUS.IDLE).length,
-      error: agents.filter(a => a.status === AGENT_STATUS.ERROR).length
+      error: agents.filter(a => a.status === AGENT_STATUS.ERROR).length,
+      enabled: agents.filter(a => a.enabled).length,
+      disabled: agents.filter(a => !a.enabled).length
     }
   }, [agents])
 
   return (
-    <div className="space-y-6">
+    <TooltipProvider>
+      <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Agent Overview</h2>
@@ -275,7 +369,9 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
             onClick={() => fetchAgents({
               search: searchTerm,
               status: statusFilter,
-              category: categoryFilter
+              category: categoryFilter,
+              createdBy: createdByFilter,
+              enabled: enabledFilter
             })}
             disabled={loading}
           >
@@ -290,7 +386,7 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Agents</CardTitle>
@@ -300,6 +396,18 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
             <div className="text-2xl font-bold">{agentStats.total}</div>
             <p className="text-xs text-muted-foreground">
               All registered agents
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Enabled</CardTitle>
+            <Power className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{agentStats.enabled}</div>
+            <p className="text-xs text-muted-foreground">
+              Active agents
             </p>
           </CardContent>
         </Card>
@@ -390,6 +498,30 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={createdByFilter} onValueChange={handleCreatedByFilterChange}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by creator" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Creators</SelectItem>
+                {Array.from(new Set(agents.map(agent => agent.createdBy?.name).filter(Boolean)))
+                  .map((creatorName) => (
+                    <SelectItem key={creatorName} value={creatorName || ''}>
+                      {creatorName}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            <Select value={enabledFilter} onValueChange={handleEnabledFilterChange}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by state" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All States</SelectItem>
+                <SelectItem value="true">Enabled Only</SelectItem>
+                <SelectItem value="false">Disabled Only</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Agent Grid */}
@@ -397,7 +529,11 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
             {agents.map((agent) => (
               <Card 
                 key={agent.id} 
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className={`cursor-pointer transition-shadow ${
+                  agent.enabled 
+                    ? 'hover:shadow-md' 
+                    : 'opacity-60 hover:shadow-sm'
+                }`}
                 onClick={() => onAgentSelect(agent.id)}
               >
                 <CardHeader className="pb-2">
@@ -419,6 +555,26 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>Edit Agent</DropdownMenuItem>
                         <DropdownMenuItem>Duplicate</DropdownMenuItem>
+                        {(user?.role === 'admin' || user?.role === 'operator') && (
+                          <DropdownMenuItem 
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleAgentEnabled(agent.id, agent.name, agent.enabled)
+                            }}
+                          >
+                            {agent.enabled ? (
+                              <>
+                                <PowerOff className="mr-2 h-4 w-4" />
+                                Disable Agent
+                              </>
+                            ) : (
+                              <>
+                                <Power className="mr-2 h-4 w-4" />
+                                Enable Agent
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                        )}
                         {user?.role === 'admin' && (
                           <DropdownMenuItem 
                             className="text-destructive"
@@ -433,27 +589,106 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={getStatusVariant(agent.status)}>
-                      {agent.status}
-                    </Badge>
-                    <Badge variant="outline">{agent.category}</Badge>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge variant={getStatusVariant(agent.status)}>
+                        {agent.status}
+                      </Badge>
+                      <Badge variant="outline">{agent.category}</Badge>
+                      <Badge variant={agent.enabled ? "secondary" : "destructive"}>
+                        {agent.enabled ? "Enabled" : "Disabled"}
+                      </Badge>
+                    </div>
+                    {(user?.role === 'admin' || user?.role === 'operator') && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleAgentEnabled(agent.id, agent.name, agent.enabled)
+                            }}
+                            className="h-6 w-6 p-0"
+                          >
+                            {agent.enabled ? (
+                              <PowerOff className="h-3 w-3 text-orange-500" />
+                            ) : (
+                              <Power className="h-3 w-3 text-green-500" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{agent.enabled ? 'Disable agent' : 'Enable agent'}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">
                     {agent.description}
                   </p>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      Last run: {agent.lastExecution 
-                        ? new Date(agent.lastExecution).toLocaleDateString()
-                        : 'Never'
-                      }
-                    </span>
-                    <span className="font-medium">
-                      {agent.executionCount} runs
-                    </span>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Created by:</span>
+                      <span className="font-medium">
+                        {agent.createdBy?.name || 'Unknown'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Created:</span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="font-medium cursor-help">
+                            {new Date(agent.createdAt).toLocaleDateString()}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Created: {agent.createdAt}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Last active:</span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="font-medium cursor-help">
+                            {new Date(agent.lastActive).toLocaleDateString()}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Last active: {agent.lastActive}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Status:</span>
+                      <span className="font-medium">
+                        {agent.enabled ? 'Enabled' : 'Disabled'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2">
+                      <span className="text-muted-foreground">
+                        Last run: {agent.lastExecution ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="font-medium cursor-help">
+                                {new Date(agent.lastExecution).toLocaleDateString()}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Last execution: {agent.lastExecution}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <span className="font-medium">Never</span>
+                        )}
+                      </span>
+                      <span className="font-medium">
+                        {agent.executionCount} runs
+                      </span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -478,7 +713,9 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
         onAgentCreated={() => fetchAgents({
           search: searchTerm,
           status: statusFilter,
-          category: categoryFilter
+          category: categoryFilter,
+          createdBy: createdByFilter,
+          enabled: enabledFilter
         })}
       />
 
@@ -502,6 +739,7 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </div>
+    </TooltipProvider>
   )
 }

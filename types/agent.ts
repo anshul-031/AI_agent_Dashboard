@@ -14,6 +14,11 @@ export interface Agent {
   executionCount: number
   configuration?: Record<string, any>
   createdById?: string
+  createdBy?: {
+    id: string
+    name: string
+    email: string
+  }
 }
 
 export interface Execution {

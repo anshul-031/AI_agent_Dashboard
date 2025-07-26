@@ -56,6 +56,13 @@ export class DatabaseService {
         createdById: data.createdById,
       },
       include: {
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
         executions: {
           orderBy: { startTime: 'desc' },
           take: 1,
@@ -89,7 +96,15 @@ export class DatabaseService {
     }
 
     if (filters?.createdBy) {
-      where.createdById = filters.createdBy;
+      // Check if it's a user ID (UUID format) or a name
+      if (filters.createdBy.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        where.createdById = filters.createdBy;
+      } else {
+        // Filter by creator name
+        where.createdBy = {
+          name: { contains: filters.createdBy, mode: 'insensitive' }
+        };
+      }
     }
 
     if (filters?.enabled !== undefined) {
@@ -102,6 +117,13 @@ export class DatabaseService {
       prisma.agent.findMany({
         where,
         include: {
+          createdBy: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
           executions: {
             orderBy: { startTime: 'desc' },
             take: 1,
@@ -127,6 +149,13 @@ export class DatabaseService {
     return await prisma.agent.findUnique({
       where: { id },
       include: {
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
         executions: {
           orderBy: { startTime: 'desc' },
         },
