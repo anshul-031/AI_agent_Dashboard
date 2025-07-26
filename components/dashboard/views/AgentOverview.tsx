@@ -34,12 +34,18 @@ import {
 import { CreateAgentModal } from '../CreateAgentModal'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useToast } from '@/hooks/use-toast'
+import { 
+  AGENT_STATUS, 
+  AGENT_STATUS_OPTIONS, 
+  AGENT_CATEGORIES,
+  type AgentStatus 
+} from '@/lib/constants'
 
 interface Agent {
   id: string
   name: string
   description: string
-  status: 'ACTIVE' | 'INACTIVE' | 'RUNNING' | 'PAUSED'
+  status: AgentStatus
   category: string
   enabled: boolean
   createdAt: string
@@ -64,12 +70,25 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
   const { token } = useAuth()
   const { toast } = useToast()
 
-  const fetchAgents = useCallback(async () => {
+  const fetchAgents = useCallback(async (filters?: {
+    search?: string;
+    status?: string;
+    category?: string;
+  }) => {
     if (!token) return
     
     try {
       setLoading(true)
-      const response = await fetch('/api/agents', {
+      
+      // Build query parameters
+      const params = new URLSearchParams()
+      if (filters?.search) params.append('search', filters.search)
+      if (filters?.status && filters.status !== 'all') params.append('status', filters.status)
+      if (filters?.category && filters.category !== 'all') params.append('category', filters.category)
+      
+      const url = `/api/agents${params.toString() ? `?${params.toString()}` : ''}`
+      
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -99,27 +118,39 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
     }
   }, [token, fetchAgents])
 
-  const filteredAgents = useMemo(() => {
-    return agents.filter(agent => {
-      const matchesSearch = agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           agent.description.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesStatus = statusFilter === 'all' || agent.status === statusFilter
-      const matchesCategory = categoryFilter === 'all' || agent.category === categoryFilter
-      
-      return matchesSearch && matchesStatus && matchesCategory
-    })
-  }, [agents, searchTerm, statusFilter, categoryFilter])
+  // Real-time search with debouncing
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchAgents({
+        search: searchTerm,
+        status: statusFilter,
+        category: categoryFilter
+      })
+    }, 300) // 300ms debounce
+
+    return () => clearTimeout(timeoutId)
+  }, [searchTerm, statusFilter, categoryFilter, fetchAgents])
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value)
+  }
+
+  const handleCategoryFilterChange = (value: string) => {
+    setCategoryFilter(value)
+  }
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value)
+  }
 
   const getStatusIcon = (status: Agent['status']) => {
     switch (status) {
-      case 'ACTIVE':
-        return <CheckCircle className="h-4 w-4 text-green-500" />
-      case 'INACTIVE':
-        return <XCircle className="h-4 w-4 text-red-500" />
-      case 'RUNNING':
+      case AGENT_STATUS.RUNNING:
         return <Play className="h-4 w-4 text-blue-500" />
-      case 'PAUSED':
-        return <Pause className="h-4 w-4 text-yellow-500" />
+      case AGENT_STATUS.IDLE:
+        return <CheckCircle className="h-4 w-4 text-green-500" />
+      case AGENT_STATUS.ERROR:
+        return <XCircle className="h-4 w-4 text-red-500" />
       default:
         return <Clock className="h-4 w-4 text-gray-500" />
     }
@@ -127,14 +158,12 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
 
   const getStatusVariant = (status: Agent['status']) => {
     switch (status) {
-      case 'ACTIVE':
+      case AGENT_STATUS.RUNNING:
         return 'default'
-      case 'INACTIVE':
-        return 'destructive'
-      case 'RUNNING':
-        return 'default'
-      case 'PAUSED':
+      case AGENT_STATUS.IDLE:
         return 'secondary'
+      case AGENT_STATUS.ERROR:
+        return 'destructive'
       default:
         return 'outline'
     }
@@ -143,9 +172,9 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
   const agentStats = useMemo(() => {
     return {
       total: agents.length,
-      active: agents.filter(a => a.status === 'ACTIVE').length,
-      running: agents.filter(a => a.status === 'RUNNING').length,
-      inactive: agents.filter(a => a.status === 'INACTIVE').length
+      running: agents.filter(a => a.status === AGENT_STATUS.RUNNING).length,
+      idle: agents.filter(a => a.status === AGENT_STATUS.IDLE).length,
+      error: agents.filter(a => a.status === AGENT_STATUS.ERROR).length
     }
   }, [agents])
 
@@ -162,7 +191,11 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => fetchAgents()}
+            onClick={() => fetchAgents({
+              search: searchTerm,
+              status: statusFilter,
+              category: categoryFilter
+            })}
             disabled={loading}
           >
             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -191,11 +224,11 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <CardTitle className="text-sm font-medium">Idle</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{agentStats.active}</div>
+            <div className="text-2xl font-bold">{agentStats.idle}</div>
             <p className="text-xs text-muted-foreground">
               Ready for execution
             </p>
@@ -215,13 +248,13 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inactive</CardTitle>
+            <CardTitle className="text-sm font-medium">Error</CardTitle>
             <XCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{agentStats.inactive}</div>
+            <div className="text-2xl font-bold">{agentStats.error}</div>
             <p className="text-xs text-muted-foreground">
-              Not operational
+              Failed agents
             </p>
           </CardContent>
         </Card>
@@ -239,42 +272,48 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              {loading && (
+                <RefreshCw className="absolute right-3 top-3 h-4 w-4 text-muted-foreground animate-spin" />
+              )}
               <Input
                 placeholder="Search agents..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                onChange={handleSearchChange}
+                className="pl-10 pr-10"
+                disabled={loading}
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="running">Running</SelectItem>
-                <SelectItem value="paused">Paused</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                {AGENT_STATUS_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <Select value={categoryFilter} onValueChange={handleCategoryFilterChange}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="Data Processing">Data Processing</SelectItem>
-                <SelectItem value="Customer Service">Customer Service</SelectItem>
-                <SelectItem value="Analytics">Analytics</SelectItem>
-                <SelectItem value="Automation">Automation</SelectItem>
+                {AGENT_CATEGORIES.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
           {/* Agent Grid */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredAgents.map((agent) => (
+            {agents.map((agent) => (
               <Card 
                 key={agent.id} 
                 className="cursor-pointer hover:shadow-md transition-shadow"
@@ -332,7 +371,7 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
             ))}
           </div>
 
-          {filteredAgents.length === 0 && (
+          {agents.length === 0 && !loading && (
             <div className="text-center py-8">
               <Bot className="mx-auto h-12 w-12 text-muted-foreground" />
               <h3 className="mt-2 text-sm font-semibold">No agents found</h3>
@@ -347,7 +386,11 @@ export function AgentOverview({ onAgentSelect }: AgentOverviewProps) {
       <CreateAgentModal
         open={createModalOpen}
         onOpenChange={setCreateModalOpen}
-        onAgentCreated={fetchAgents}
+        onAgentCreated={() => fetchAgents({
+          search: searchTerm,
+          status: statusFilter,
+          category: categoryFilter
+        })}
       />
     </div>
   )

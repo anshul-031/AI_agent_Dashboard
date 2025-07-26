@@ -75,10 +75,9 @@ model User {
 }
 
 enum AgentStatus {
-  ACTIVE
-  INACTIVE
-  RUNNING
-  PAUSED
+  Running
+  Idle
+  Error
 }
 
 enum ExecutionStatus {

@@ -1,13 +1,19 @@
+import { type AgentStatus } from '@/lib/constants';
+
 export interface Agent {
   id: string
   name: string
   description: string
-  status: 'active' | 'inactive' | 'running' | 'paused'
+  status: AgentStatus
   category: string
+  enabled: boolean
   createdAt: string
-  lastExecution: string
+  updatedAt: string
+  lastActive: string
+  lastExecution: string | null
   executionCount: number
   configuration?: Record<string, any>
+  createdById?: string
 }
 
 export interface Execution {

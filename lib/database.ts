@@ -1,7 +1,8 @@
 import { prisma } from './prisma';
 import { Agent, Execution, Flowchart } from '@/types/agent';
+import { AgentStatus } from '@prisma/client';
+import { AGENT_STATUS } from '@/lib/constants';
 
-type AgentStatus = 'ACTIVE' | 'INACTIVE' | 'RUNNING' | 'PAUSED';
 type ExecutionStatus = 'SUCCESS' | 'FAILED' | 'RUNNING' | 'PENDING';
 
 export class DatabaseService {
@@ -46,8 +47,13 @@ export class DatabaseService {
   }) {
     return await prisma.agent.create({
       data: {
-        ...data,
+        name: data.name,
+        description: data.description,
+        status: data.status,
+        category: data.category,
+        configuration: data.configuration,
         enabled: data.enabled !== undefined ? data.enabled : true,
+        createdById: data.createdById,
       },
       include: {
         executions: {
@@ -304,9 +310,9 @@ export class DatabaseService {
   }
 
   async getDashboardStats() {
-    const [totalAgents, activeAgents, totalExecutions, recentExecutions] = await Promise.all([
+    const [totalAgents, idleAgents, totalExecutions, recentExecutions] = await Promise.all([
       prisma.agent.count(),
-      prisma.agent.count({ where: { status: 'ACTIVE' } }),
+      prisma.agent.count({ where: { status: 'Idle' } }),
       prisma.execution.count(),
       prisma.execution.count({
         where: {
@@ -323,7 +329,7 @@ export class DatabaseService {
 
     return {
       totalAgents,
-      activeAgents,
+      idleAgents,
       totalExecutions,
       recentExecutions,
       successRate: Math.round(successRate * 100) / 100,

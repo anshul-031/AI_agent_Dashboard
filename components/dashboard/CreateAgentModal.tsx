@@ -22,6 +22,13 @@ import {
 } from '@/components/ui/dialog'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useToast } from '@/hooks/use-toast'
+import { 
+  AGENT_STATUS_OPTIONS, 
+  AGENT_CATEGORIES, 
+  DEFAULT_AGENT_STATUS, 
+  DEFAULT_AGENT_ENABLED,
+  type AgentStatus 
+} from '@/lib/constants'
 
 interface CreateAgentModalProps {
   open: boolean
@@ -34,8 +41,8 @@ export function CreateAgentModal({ open, onOpenChange, onAgentCreated }: CreateA
     name: '',
     description: '',
     category: '',
-    status: 'ACTIVE' as const,
-    enabled: true,
+    status: DEFAULT_AGENT_STATUS as AgentStatus,
+    enabled: DEFAULT_AGENT_ENABLED,
     configuration: {}
   })
   const [loading, setLoading] = useState(false)
@@ -82,8 +89,8 @@ export function CreateAgentModal({ open, onOpenChange, onAgentCreated }: CreateA
         name: '',
         description: '',
         category: '',
-        status: 'ACTIVE',
-        enabled: true,
+        status: DEFAULT_AGENT_STATUS,
+        enabled: DEFAULT_AGENT_ENABLED,
         configuration: {}
       })
 
@@ -142,13 +149,11 @@ export function CreateAgentModal({ open, onOpenChange, onAgentCreated }: CreateA
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Data Processing">Data Processing</SelectItem>
-                  <SelectItem value="Communication">Communication</SelectItem>
-                  <SelectItem value="Analytics">Analytics</SelectItem>
-                  <SelectItem value="Automation">Automation</SelectItem>
-                  <SelectItem value="Monitoring">Monitoring</SelectItem>
-                  <SelectItem value="Testing">Testing</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
+                  {AGENT_CATEGORIES.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -177,9 +182,11 @@ export function CreateAgentModal({ open, onOpenChange, onAgentCreated }: CreateA
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ACTIVE">Active</SelectItem>
-                  <SelectItem value="INACTIVE">Inactive</SelectItem>
-                  <SelectItem value="PAUSED">Paused</SelectItem>
+                  {AGENT_STATUS_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

@@ -3,8 +3,7 @@ import { db } from '@/lib/database';
 import { validateAgentData } from '@/lib/utils';
 import { withAuth, withSecurity, withRateLimit, composeMiddleware, AuthenticatedRequest } from '@/lib/middleware';
 import { validateRequestData, validationPatterns } from '@/lib/auth';
-
-type AgentStatus = 'ACTIVE' | 'INACTIVE' | 'RUNNING' | 'PAUSED';
+import { AGENT_STATUS, AGENT_STATUS_OPTIONS, type AgentStatus } from '@/lib/constants';
 
 /**
  * @swagger
@@ -19,7 +18,7 @@ type AgentStatus = 'ACTIVE' | 'INACTIVE' | 'RUNNING' | 'PAUSED';
  *         name: status
  *         schema:
  *           type: string
- *           enum: [ACTIVE, INACTIVE, RUNNING, PAUSED]
+ *           enum: [Running, Idle, Error]
  *         description: Filter by agent status
  *       - in: query
  *         name: category
@@ -124,8 +123,8 @@ async function getAgentsHandler(request: AuthenticatedRequest): Promise<NextResp
  *                 example: "Data Processing"
  *               status:
  *                 type: string
- *                 enum: [ACTIVE, INACTIVE, RUNNING, PAUSED]
- *                 example: "ACTIVE"
+ *                 enum: [Running, Idle, Error]
+ *                 example: "Running"
  *               configuration:
  *                 type: object
  *                 example: {"inputSource": "api", "outputFormat": "json"}
@@ -173,7 +172,7 @@ async function createAgentHandler(request: AuthenticatedRequest): Promise<NextRe
       status: {
         required: true,
         type: 'string',
-        enum: ['ACTIVE', 'INACTIVE', 'RUNNING', 'PAUSED']
+        enum: AGENT_STATUS_OPTIONS.map(opt => opt.value)
       },
       enabled: {
         type: 'boolean'
@@ -190,7 +189,7 @@ async function createAgentHandler(request: AuthenticatedRequest): Promise<NextRe
     const agent = await db.createAgent({
       name: body.name,
       description: body.description,
-      status: body.status as AgentStatus,
+      status: body.status,
       category: body.category,
       configuration: body.configuration,
       enabled: body.enabled !== undefined ? body.enabled : true,

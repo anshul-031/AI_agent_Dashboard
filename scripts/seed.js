@@ -51,7 +51,7 @@ async function seedPostgreSQL() {
       data: {
         name: 'Data Processing Agent',
         description: 'Processes and analyzes incoming data streams',
-        status: 'ACTIVE',
+        status: 'Running',
         category: 'Data Processing',
         enabled: true,
         createdById: users[0].id,
@@ -66,7 +66,7 @@ async function seedPostgreSQL() {
       data: {
         name: 'Email Automation Agent',
         description: 'Automates email responses and routing',
-        status: 'ACTIVE',
+        status: 'Idle',
         category: 'Communication',
         enabled: true,
         createdById: users[1].id,
@@ -80,7 +80,7 @@ async function seedPostgreSQL() {
       data: {
         name: 'Report Generation Agent',
         description: 'Generates periodic business reports',
-        status: 'INACTIVE',
+        status: 'Error',
         category: 'Analytics',
         enabled: false,
         createdById: users[0].id,
