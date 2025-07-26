@@ -114,7 +114,10 @@ export function hasPermission(userRole: string, requiredRole: string): boolean {
   const roleHierarchy = {
     'viewer': 1,
     'operator': 2,
-    'admin': 3
+    'admin': 3,
+    'VIEWER': 1,
+    'OPERATOR': 2,
+    'ADMIN': 3
   };
 
   const userLevel = roleHierarchy[userRole as keyof typeof roleHierarchy] || 0;

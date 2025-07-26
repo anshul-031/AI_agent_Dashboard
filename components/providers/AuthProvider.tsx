@@ -15,6 +15,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   logout: () => void
   loading: boolean
+  token: string | null
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -22,13 +23,32 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [token, setToken] = useState<string | null>(null)
 
   useEffect(() => {
-    // Simulate checking for existing session
-    const checkAuth = () => {
-      const savedUser = localStorage.getItem('user')
-      if (savedUser) {
-        setUser(JSON.parse(savedUser))
+    // Check for existing session
+    const checkAuth = async () => {
+      const savedToken = localStorage.getItem('auth-token')
+      if (savedToken) {
+        try {
+          const response = await fetch('/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${savedToken}`
+            }
+          })
+          
+          if (response.ok) {
+            const data = await response.json()
+            setUser(data.user)
+            setToken(savedToken)
+          } else {
+            // Token is invalid, remove it
+            localStorage.removeItem('auth-token')
+          }
+        } catch (error) {
+          console.error('Auth check failed:', error)
+          localStorage.removeItem('auth-token')
+        }
       }
       setLoading(false)
     }
@@ -39,30 +59,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     setLoading(true)
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Mock user based on email
-    const mockUser: User = {
-      id: '1',
-      email,
-      name: email === 'admin@company.com' ? 'Admin User' : 'John Doe',
-      role: email === 'admin@company.com' ? 'admin' : 'operator',
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Login failed')
+      }
+
+      const data = await response.json()
+      setUser(data.user)
+      setToken(data.token)
+      localStorage.setItem('auth-token', data.token)
+    } catch (error) {
+      console.error('Login error:', error)
+      throw error
+    } finally {
+      setLoading(false)
     }
-    
-    setUser(mockUser)
-    localStorage.setItem('user', JSON.stringify(mockUser))
-    setLoading(false)
   }
 
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem('user')
+  const logout = async () => {
+    try {
+      if (token) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      setUser(null)
+      setToken(null)
+      localStorage.removeItem('auth-token')
+    }
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, token }}>
       {children}
     </AuthContext.Provider>
   )

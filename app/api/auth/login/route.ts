@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
-  findUserByEmail, 
-  comparePassword, 
   generateToken, 
+  comparePassword,
   validateRequestData,
-  validationPatterns,
-  sanitizeInput
+  sanitizeInput,
+  validationPatterns
 } from '@/lib/auth';
-import { withRateLimit, withSecurity, composeMiddleware } from '@/lib/middleware';
+import { composeMiddleware, withSecurity, withRateLimit } from '@/lib/middleware';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 /**
  * @swagger
@@ -85,8 +87,11 @@ async function loginHandler(request: NextRequest): Promise<NextResponse> {
     const email = sanitizeInput(body.email.toLowerCase());
     const password = body.password;
 
-    // Find user
-    const user = findUserByEmail(email);
+    // Find user in database
+    const user = await prisma.user.findUnique({
+      where: { email }
+    }) as any; // Type assertion to access all fields
+    
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
@@ -107,8 +112,8 @@ async function loginHandler(request: NextRequest): Promise<NextResponse> {
     const tokenPayload = {
       userId: user.id,
       email: user.email,
-      role: user.role,
-      name: user.name
+      role: user.role.toLowerCase() as 'admin' | 'operator' | 'viewer',
+      name: user.name || 'User'
     };
     
     const token = generateToken(tokenPayload);
