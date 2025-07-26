@@ -57,6 +57,7 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
   // Utility function to get auth headers
   const getAuthHeaders = () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth-token') : null;
+    console.log('Auth token from localStorage:', token ? 'Token exists' : 'No token found');
     return {
       'Content-Type': 'application/json',
       ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -242,30 +243,47 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
             onClick={async () => {
               if (!agentId) return;
               
+              // Check if user is authenticated
+              const token = typeof window !== 'undefined' ? localStorage.getItem('auth-token') : null;
+              if (!token) {
+                alert('You must be logged in to run an agent. Please refresh the page and try again.');
+                return;
+              }
+              
+              console.log('Creating execution for agentId:', agentId);
               setIsRunning(true);
               try {
                 // Generate random status instead of always 'pending'
                 const randomStatus = getRandomStatus();
                 
+                const requestBody = {
+                  agentId: agentId,
+                  status: randomStatus // Already uppercase from enum
+                };
+                console.log('Request body:', requestBody);
+                
                 // Create a new execution
                 const response = await fetch('/api/executions', {
                   method: 'POST',
                   headers: getAuthHeaders(),
-                  body: JSON.stringify({
-                    agentId: agentId,
-                    status: randomStatus // Already uppercase from enum
-                  })
+                  body: JSON.stringify(requestBody)
                 });
                 
                 if (response.ok) {
                   // Refresh the execution data to show the new execution
                   refetchExecutions();
                 } else {
-                  throw new Error('Failed to start execution');
+                  const errorData = await response.json();
+                  console.error('API error response:', errorData);
+                  if (response.status === 401) {
+                    alert('Authentication failed. Please refresh the page and try again.');
+                  } else {
+                    throw new Error(`Failed to start execution: ${errorData.error || 'Unknown error'}`);
+                  }
                 }
               } catch (error) {
                 console.error('Error starting agent:', error);
-                alert('Failed to start agent execution. Please try again.');
+                alert(`Failed to start agent execution: ${error instanceof Error ? error.message : 'Please try again.'}`);
               } finally {
                 setIsRunning(false);
               }
@@ -538,28 +556,45 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
                         onClick={async () => {
                           if (!agentId) return;
                           
+                          // Check if user is authenticated
+                          const token = typeof window !== 'undefined' ? localStorage.getItem('auth-token') : null;
+                          if (!token) {
+                            alert('You must be logged in to run an agent. Please refresh the page and try again.');
+                            return;
+                          }
+                          
+                          console.log('Creating execution for agentId:', agentId);
                           setIsRunning(true);
                           try {
                             // Generate random status instead of always 'pending'
                             const randomStatus = getRandomStatus();
                             
+                            const requestBody = {
+                              agentId: agentId,
+                              status: randomStatus // Already uppercase from enum
+                            };
+                            console.log('Request body:', requestBody);
+                            
                             const response = await fetch('/api/executions', {
                               method: 'POST',
                               headers: getAuthHeaders(),
-                              body: JSON.stringify({
-                                agentId: agentId,
-                                status: randomStatus // Already uppercase from enum
-                              })
+                              body: JSON.stringify(requestBody)
                             });
                             
                             if (response.ok) {
                               refetchExecutions();
                             } else {
-                              throw new Error('Failed to start execution');
+                              const errorData = await response.json();
+                              console.error('API error response:', errorData);
+                              if (response.status === 401) {
+                                alert('Authentication failed. Please refresh the page and try again.');
+                              } else {
+                                throw new Error(`Failed to start execution: ${errorData.error || 'Unknown error'}`);
+                              }
                             }
                           } catch (error) {
                             console.error('Error starting agent:', error);
-                            alert('Failed to start agent execution. Please try again.');
+                            alert(`Failed to start agent execution: ${error instanceof Error ? error.message : 'Please try again.'}`);
                           } finally {
                             setIsRunning(false);
                           }
@@ -682,28 +717,34 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
                         onClick={async () => {
                           if (!agentId) return;
                           
+                          console.log('Creating execution for agentId (detailed view):', agentId);
                           setIsRunning(true);
                           try {
                             // Generate random status instead of always 'pending'
                             const randomStatus = getRandomStatus();
                             
+                            const requestBody = {
+                              agentId: agentId,
+                              status: randomStatus // Already uppercase from enum
+                            };
+                            console.log('Request body (detailed view):', requestBody);
+                            
                             const response = await fetch('/api/executions', {
                               method: 'POST',
                               headers: getAuthHeaders(),
-                              body: JSON.stringify({
-                                agentId: agentId,
-                                status: randomStatus // Already uppercase from enum
-                              })
+                              body: JSON.stringify(requestBody)
                             });
                             
                             if (response.ok) {
                               refetchExecutions();
                             } else {
-                              throw new Error('Failed to start execution');
+                              const errorData = await response.json();
+                              console.error('API error response (detailed view):', errorData);
+                              throw new Error(`Failed to start execution: ${errorData.error || 'Unknown error'}`);
                             }
                           } catch (error) {
                             console.error('Error starting agent:', error);
-                            alert('Failed to start agent execution. Please try again.');
+                            alert(`Failed to start agent execution: ${error instanceof Error ? error.message : 'Please try again.'}`);
                           } finally {
                             setIsRunning(false);
                           }

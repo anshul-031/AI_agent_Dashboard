@@ -179,6 +179,7 @@ async function createExecutionHandler(request: AuthenticatedRequest): Promise<Ne
     await db.initialize();
     
     const body = await request.json();
+    console.log('Received execution request body:', body);
     
     // Validate request data
     const validation = validateRequestData(body, {
@@ -194,14 +195,19 @@ async function createExecutionHandler(request: AuthenticatedRequest): Promise<Ne
     });
 
     if (!validation.isValid) {
+      console.log('Validation failed:', validation.errors);
       return NextResponse.json(
         { error: 'Validation failed', details: validation.errors },
         { status: 400 }
       );
     }
 
+    console.log('Creating execution with agentId:', body.agentId);
+    console.log('User from request:', request.user);
+
     // Verify agent exists
     const agent = await db.getAgentById(body.agentId);
+    console.log('Agent found:', agent ? `${agent.name} (${agent.id})` : 'null');
     if (!agent) {
       return NextResponse.json(
         { error: 'Agent not found' },
@@ -209,14 +215,17 @@ async function createExecutionHandler(request: AuthenticatedRequest): Promise<Ne
       );
     }
 
-    const execution = await db.createExecution({
+    const executionData = {
       agentId: body.agentId,
       status: body.status as ExecutionStatus || 'RUNNING',
       result: body.result,
       error: body.error,
       logs: body.logs,
-      triggeredById: request.user?.id,
-    });
+      ...(request.user?.id ? { triggeredById: request.user.id } : {}),
+    };
+    console.log('Execution data to create:', executionData);
+
+    const execution = await db.createExecution(executionData);
 
     return NextResponse.json({ execution }, { status: 201 });
   } catch (error) {
