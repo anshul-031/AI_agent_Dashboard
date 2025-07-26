@@ -1,7 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/database';
+import { withAuth, withSecurity, withRateLimit, composeMiddleware, AuthenticatedRequest } from '@/lib/middleware';
 
-export async function GET() {
+/**
+ * @swagger
+ * /api/dashboard/stats:
+ *   get:
+ *     summary: Get dashboard statistics
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 stats:
+ *                   type: object
+ *                   properties:
+ *                     totalAgents:
+ *                       type: number
+ *                       example: 15
+ *                     activeAgents:
+ *                       type: number
+ *                       example: 12
+ *                     totalExecutions:
+ *                       type: number
+ *                       example: 1250
+ *                     recentExecutions:
+ *                       type: number
+ *                       example: 45
+ *                     successRate:
+ *                       type: number
+ *                       example: 95.5
+ *                     avgExecutionTime:
+ *                       type: number
+ *                       example: 120.5
+ *                     agentsByCategory:
+ *                       type: object
+ *                       example:
+ *                         "Data Processing": 5
+ *                         "Communication": 3
+ *                         "Analytics": 2
+ *                     executionTrend:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           date:
+ *                             type: string
+ *                             format: date
+ *                           count:
+ *                             type: number
+ */
+async function getDashboardStatsHandler(request: AuthenticatedRequest): Promise<NextResponse> {
   try {
     await db.initialize();
     
@@ -16,3 +71,10 @@ export async function GET() {
     );
   }
 }
+
+// Apply middleware
+export const GET = composeMiddleware(
+  withSecurity,
+  withRateLimit(100),
+  withAuth('viewer')
+)(getDashboardStatsHandler);

@@ -41,9 +41,20 @@ export class DatabaseService {
     status: AgentStatus;
     category: string;
     configuration?: any;
+    enabled?: boolean;
+    createdById?: string;
   }) {
     return await prisma.agent.create({
-      data,
+      data: {
+        ...data,
+        enabled: data.enabled !== undefined ? data.enabled : true,
+      },
+      include: {
+        executions: {
+          orderBy: { startTime: 'desc' },
+          take: 1,
+        },
+      },
     });
   }
 
@@ -51,7 +62,9 @@ export class DatabaseService {
     status?: AgentStatus;
     category?: string;
     search?: string;
-  }) {
+    createdBy?: string;
+    enabled?: boolean;
+  }, page: number = 1, limit: number = 10) {
     const where: any = {};
 
     if (filters?.status) {
@@ -69,16 +82,39 @@ export class DatabaseService {
       ];
     }
 
-    return await prisma.agent.findMany({
-      where,
-      include: {
-        executions: {
-          orderBy: { startTime: 'desc' },
-          take: 1,
+    if (filters?.createdBy) {
+      where.createdById = filters.createdBy;
+    }
+
+    if (filters?.enabled !== undefined) {
+      where.enabled = filters.enabled;
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [agents, total] = await Promise.all([
+      prisma.agent.findMany({
+        where,
+        include: {
+          executions: {
+            orderBy: { startTime: 'desc' },
+            take: 1,
+          },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.agent.count({ where }),
+    ]);
+
+    return {
+      agents,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async getAgentById(id: string) {
@@ -122,9 +158,18 @@ export class DatabaseService {
     result?: string;
     error?: string;
     logs?: any;
+    triggeredById?: string;
   }) {
     const execution = await prisma.execution.create({
       data,
+      include: {
+        agent: {
+          select: {
+            name: true,
+            category: true,
+          },
+        },
+      },
     });
 
     // Update agent's execution count and last execution time
@@ -152,22 +197,57 @@ export class DatabaseService {
     });
   }
 
-  async getExecutions(agentId?: string, limit: number = 50) {
-    const where = agentId ? { agentId } : {};
+  async getExecutions(filters?: {
+    agentId?: string;
+    status?: ExecutionStatus;
+    startTime?: { gte?: Date; lte?: Date };
+    endTime?: { gte?: Date; lte?: Date };
+  }, page: number = 1, limit: number = 50) {
+    const where: any = {};
 
-    return await prisma.execution.findMany({
-      where,
-      include: {
-        agent: {
-          select: {
-            name: true,
-            category: true,
+    if (filters?.agentId) {
+      where.agentId = filters.agentId;
+    }
+
+    if (filters?.status) {
+      where.status = filters.status;
+    }
+
+    if (filters?.startTime) {
+      where.startTime = filters.startTime;
+    }
+
+    if (filters?.endTime) {
+      where.endTime = filters.endTime;
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [executions, total] = await Promise.all([
+      prisma.execution.findMany({
+        where,
+        include: {
+          agent: {
+            select: {
+              name: true,
+              category: true,
+            },
           },
         },
-      },
-      orderBy: { startTime: 'desc' },
-      take: limit,
-    });
+        orderBy: { startTime: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.execution.count({ where }),
+    ]);
+
+    return {
+      executions,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async getExecutionById(id: string) {

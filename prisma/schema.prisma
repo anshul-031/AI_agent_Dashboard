@@ -17,12 +17,21 @@ model Agent {
   status        AgentStatus
   category      String
   createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lastActive    DateTime @default(now())
   lastExecution DateTime?
   executionCount Int     @default(0)
   configuration Json?
+  enabled       Boolean  @default(true)
+  
+  // User tracking
+  createdById   String?
+  updatedById   String?
   
   // Relations
   executions    Execution[]
+  createdBy     User?       @relation("AgentCreatedBy", fields: [createdById], references: [id])
+  updatedBy     User?       @relation("AgentUpdatedBy", fields: [updatedById], references: [id])
   
   @@map("agents")
 }
@@ -37,8 +46,12 @@ model Execution {
   error     String?
   logs      Json?           // Store execution logs as JSON
   
+  // User tracking
+  triggeredById String?
+  
   // Relations
-  agent     Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agent         Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  triggeredBy   User?           @relation("ExecutionTriggeredBy", fields: [triggeredById], references: [id])
   
   @@map("executions")
 }
@@ -46,9 +59,17 @@ model Execution {
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
-  name      String?
+  name      String
+  role      UserRole @default(VIEWER)
+  passwordHash String
+  lastLoginAt  DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  // Relations
+  createdAgents   Agent[]     @relation("AgentCreatedBy")
+  updatedAgents   Agent[]     @relation("AgentUpdatedBy")
+  triggeredExecutions Execution[] @relation("ExecutionTriggeredBy")
   
   @@map("users")
 }
@@ -65,4 +86,10 @@ enum ExecutionStatus {
   FAILED
   RUNNING
   PENDING
+}
+
+enum UserRole {
+  ADMIN
+  OPERATOR
+  VIEWER
 }

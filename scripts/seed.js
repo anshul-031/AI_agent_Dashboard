@@ -2,11 +2,48 @@
 
 const { PrismaClient } = require('@prisma/client');
 const { MongoClient } = require('mongodb');
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
 async function seedPostgreSQL() {
   console.log('🌱 Seeding PostgreSQL...');
+
+  // Create users first
+  const hashedPassword = await bcrypt.hash('password', 12);
+  
+  const users = await Promise.all([
+    prisma.user.upsert({
+      where: { email: 'admin@company.com' },
+      update: {},
+      create: {
+        email: 'admin@company.com',
+        name: 'Admin User',
+        role: 'ADMIN',
+        passwordHash: hashedPassword,
+      }
+    }),
+    prisma.user.upsert({
+      where: { email: 'operator@company.com' },
+      update: {},
+      create: {
+        email: 'operator@company.com',
+        name: 'Operator User',
+        role: 'OPERATOR',
+        passwordHash: hashedPassword,
+      }
+    }),
+    prisma.user.upsert({
+      where: { email: 'viewer@company.com' },
+      update: {},
+      create: {
+        email: 'viewer@company.com',
+        name: 'Viewer User',
+        role: 'VIEWER',
+        passwordHash: hashedPassword,
+      }
+    })
+  ]);
 
   // Create sample agents
   const agents = await Promise.all([
@@ -16,6 +53,8 @@ async function seedPostgreSQL() {
         description: 'Processes and analyzes incoming data streams',
         status: 'ACTIVE',
         category: 'Data Processing',
+        enabled: true,
+        createdById: users[0].id,
         configuration: {
           inputSource: 'api',
           outputFormat: 'json',
@@ -29,6 +68,8 @@ async function seedPostgreSQL() {
         description: 'Automates email responses and routing',
         status: 'ACTIVE',
         category: 'Communication',
+        enabled: true,
+        createdById: users[1].id,
         configuration: {
           emailTemplates: ['welcome', 'support', 'notification'],
           triggerRules: ['new_user', 'support_ticket', 'system_alert']
@@ -41,6 +82,8 @@ async function seedPostgreSQL() {
         description: 'Generates periodic business reports',
         status: 'INACTIVE',
         category: 'Analytics',
+        enabled: false,
+        createdById: users[0].id,
         configuration: {
           schedule: 'daily',
           reportTypes: ['sales', 'performance', 'errors'],
@@ -59,6 +102,7 @@ async function seedPostgreSQL() {
         startTime: new Date(Date.now() - 3600000), // 1 hour ago
         endTime: new Date(Date.now() - 3540000), // 59 minutes ago
         result: 'Processed 1,250 records successfully',
+        triggeredById: users[1].id,
         logs: [
           { timestamp: new Date().toISOString(), level: 'info', message: 'Starting data processing' },
           { timestamp: new Date().toISOString(), level: 'info', message: 'Processing completed' }
@@ -72,6 +116,7 @@ async function seedPostgreSQL() {
         startTime: new Date(Date.now() - 1800000), // 30 minutes ago
         endTime: new Date(Date.now() - 1740000), // 29 minutes ago
         result: 'Sent 45 automated emails',
+        triggeredById: users[0].id,
         logs: [
           { timestamp: new Date().toISOString(), level: 'info', message: 'Email automation started' },
           { timestamp: new Date().toISOString(), level: 'info', message: 'All emails sent successfully' }
@@ -85,6 +130,7 @@ async function seedPostgreSQL() {
         startTime: new Date(Date.now() - 900000), // 15 minutes ago
         endTime: new Date(Date.now() - 840000), // 14 minutes ago
         error: 'Database connection timeout',
+        triggeredById: users[1].id,
         logs: [
           { timestamp: new Date().toISOString(), level: 'info', message: 'Starting data processing' },
           { timestamp: new Date().toISOString(), level: 'error', message: 'Database connection failed' }
@@ -93,7 +139,7 @@ async function seedPostgreSQL() {
     })
   ]);
 
-  console.log(`✅ Created ${agents.length} agents and ${executions.length} executions`);
+  console.log(`✅ Created ${users.length} users, ${agents.length} agents and ${executions.length} executions`);
   return agents;
 }
 

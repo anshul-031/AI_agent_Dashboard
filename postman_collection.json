@@ -1,0 +1,508 @@
+{
+  "info": {
+    "name": "AI Agent Dashboard API",
+    "description": "RESTful API for managing AI agents, executions, and workflows",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "agent_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "execution_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@company.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', response.token);",
+                  "    pm.test('Login successful', function () {",
+                  "        pm.expect(response.token).to.be.a('string');",
+                  "        pm.expect(response.user).to.be.an('object');",
+                  "    });",
+                  "} else {",
+                  "    pm.test('Login failed', function () {",
+                  "        pm.expect(pm.response.code).to.be.oneOf([400, 401]);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Agents",
+      "item": [
+        {
+          "name": "Get All Agents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/agents?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "agents"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "Data Processing",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "processing",
+                  "disabled": true
+                },
+                {
+                  "key": "enabled",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Agent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Agent\",\n  \"description\": \"A test agent for API demonstration\",\n  \"category\": \"Testing\",\n  \"status\": \"ACTIVE\",\n  \"enabled\": true,\n  \"configuration\": {\n    \"inputSource\": \"api\",\n    \"outputFormat\": \"json\",\n    \"testMode\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/agents",
+              "host": ["{{base_url}}"],
+              "path": ["api", "agents"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('agent_id', response.agent.id);",
+                  "    pm.test('Agent created successfully', function () {",
+                  "        pm.expect(response.agent).to.be.an('object');",
+                  "        pm.expect(response.agent.id).to.be.a('string');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Agent by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/agents/{{agent_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "agents", "{{agent_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Agent",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Test Agent\",\n  \"description\": \"An updated test agent\",\n  \"status\": \"PAUSED\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/agents/{{agent_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "agents", "{{agent_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Agent",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/agents/{{agent_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "agents", "{{agent_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Executions",
+      "item": [
+        {
+          "name": "Get All Executions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/executions?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "executions"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "agentId",
+                  "value": "{{agent_id}}",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "SUCCESS",
+                  "disabled": true
+                },
+                {
+                  "key": "startTimeFrom",
+                  "value": "2024-01-01T00:00:00Z",
+                  "disabled": true
+                },
+                {
+                  "key": "startTimeTo",
+                  "value": "2024-12-31T23:59:59Z",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Execution",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agentId\": \"{{agent_id}}\",\n  \"status\": \"RUNNING\",\n  \"logs\": [\n    {\n      \"timestamp\": \"2024-01-01T12:00:00Z\",\n      \"level\": \"info\",\n      \"message\": \"Execution started\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/executions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "executions"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('execution_id', response.execution.id);",
+                  "    pm.test('Execution created successfully', function () {",
+                  "        pm.expect(response.execution).to.be.an('object');",
+                  "        pm.expect(response.execution.id).to.be.a('string');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Execution by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/executions/{{execution_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "executions", "{{execution_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Execution",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"SUCCESS\",\n  \"result\": \"Process completed successfully\",\n  \"logs\": [\n    {\n      \"timestamp\": \"2024-01-01T12:00:00Z\",\n      \"level\": \"info\",\n      \"message\": \"Execution started\"\n    },\n    {\n      \"timestamp\": \"2024-01-01T12:05:00Z\",\n      \"level\": \"info\",\n      \"message\": \"Execution completed successfully\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/executions/{{execution_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "executions", "{{execution_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Execution Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/executions/{{execution_id}}/logs?limit=100",
+              "host": ["{{base_url}}"],
+              "path": ["api", "executions", "{{execution_id}}", "logs"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100"
+                },
+                {
+                  "key": "level",
+                  "value": "error",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Flowcharts",
+      "item": [
+        {
+          "name": "Get Agent Flowchart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/agents/{{agent_id}}/flowchart",
+              "host": ["{{base_url}}"],
+              "path": ["api", "agents", "{{agent_id}}", "flowchart"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Agent Flowchart",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"version\": \"1.0.0\",\n  \"nodes\": [\n    {\n      \"id\": \"start\",\n      \"type\": \"start\",\n      \"title\": \"Start\",\n      \"position\": { \"x\": 100, \"y\": 50 }\n    },\n    {\n      \"id\": \"process\",\n      \"type\": \"process\",\n      \"title\": \"Process Data\",\n      \"description\": \"Main processing step\",\n      \"position\": { \"x\": 100, \"y\": 150 }\n    },\n    {\n      \"id\": \"end\",\n      \"type\": \"end\",\n      \"title\": \"End\",\n      \"position\": { \"x\": 100, \"y\": 250 }\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"c1\",\n      \"from\": \"start\",\n      \"to\": \"process\"\n    },\n    {\n      \"id\": \"c2\",\n      \"from\": \"process\",\n      \"to\": \"end\"\n    }\n  ],\n  \"metadata\": {\n    \"title\": \"Test Agent Workflow\",\n    \"description\": \"Simple linear workflow\",\n    \"layout\": \"vertical\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/agents/{{agent_id}}/flowchart",
+              "host": ["{{base_url}}"],
+              "path": ["api", "agents", "{{agent_id}}", "flowchart"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Agent Flowchart",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"version\": \"1.1.0\",\n  \"metadata\": {\n    \"title\": \"Updated Test Agent Workflow\",\n    \"description\": \"Updated workflow description\",\n    \"layout\": \"vertical\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/agents/{{agent_id}}/flowchart",
+              "host": ["{{base_url}}"],
+              "path": ["api", "agents", "{{agent_id}}", "flowchart"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Agent Flowchart",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/agents/{{agent_id}}/flowchart",
+              "host": ["{{base_url}}"],
+              "path": ["api", "agents", "{{agent_id}}", "flowchart"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "stats"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Documentation",
+      "item": [
+        {
+          "name": "Get API Documentation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/docs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "docs"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
