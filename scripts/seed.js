@@ -95,48 +95,142 @@ async function seedPostgreSQL() {
 
   // Create sample executions
   const executions = await Promise.all([
+    // Recent successful execution for agent 0
     prisma.execution.create({
       data: {
         agentId: agents[0].id,
         status: 'SUCCESS',
-        startTime: new Date(Date.now() - 3600000), // 1 hour ago
-        endTime: new Date(Date.now() - 3540000), // 59 minutes ago
-        result: 'Processed 1,250 records successfully',
+        startTime: new Date('2024-01-20T14:30:00Z'),
+        endTime: new Date('2024-01-20T14:32:15Z'),
+        result: 'Processed 45 customer inquiries, escalated 3 to human agents',
         triggeredById: users[1].id,
         logs: [
-          { timestamp: new Date().toISOString(), level: 'info', message: 'Starting data processing' },
-          { timestamp: new Date().toISOString(), level: 'info', message: 'Processing completed' }
+          { timestamp: '2024-01-20T14:30:05Z', level: 'info', message: 'Started processing customer inquiries queue' },
+          { timestamp: '2024-01-20T14:31:20Z', level: 'info', message: 'Processed inquiry #12345 - routing issue resolved' },
+          { timestamp: '2024-01-20T14:32:10Z', level: 'warn', message: 'Escalating complex technical inquiry #12367 to human agent' }
         ]
       }
     }),
+    // Earlier successful execution for agent 0
     prisma.execution.create({
       data: {
-        agentId: agents[1].id,
+        agentId: agents[0].id,
         status: 'SUCCESS',
-        startTime: new Date(Date.now() - 1800000), // 30 minutes ago
-        endTime: new Date(Date.now() - 1740000), // 29 minutes ago
-        result: 'Sent 45 automated emails',
-        triggeredById: users[0].id,
+        startTime: new Date('2024-01-20T13:30:00Z'),
+        endTime: new Date('2024-01-20T13:31:45Z'),
+        result: 'Processed 32 customer inquiries, escalated 1 to human agents',
+        triggeredById: users[1].id,
         logs: [
-          { timestamp: new Date().toISOString(), level: 'info', message: 'Email automation started' },
-          { timestamp: new Date().toISOString(), level: 'info', message: 'All emails sent successfully' }
+          { timestamp: '2024-01-20T13:30:05Z', level: 'info', message: 'Started processing customer inquiries queue' },
+          { timestamp: '2024-01-20T13:31:40Z', level: 'info', message: 'Successfully resolved all standard inquiries' }
         ]
       }
     }),
+    // Failed execution for agent 0
     prisma.execution.create({
       data: {
         agentId: agents[0].id,
         status: 'FAILED',
-        startTime: new Date(Date.now() - 900000), // 15 minutes ago
-        endTime: new Date(Date.now() - 840000), // 14 minutes ago
-        error: 'Database connection timeout',
+        startTime: new Date('2024-01-20T12:30:00Z'),
+        endTime: new Date('2024-01-20T12:31:20Z'),
+        error: 'Connection timeout to customer database',
         triggeredById: users[1].id,
         logs: [
-          { timestamp: new Date().toISOString(), level: 'info', message: 'Starting data processing' },
-          { timestamp: new Date().toISOString(), level: 'error', message: 'Database connection failed' }
+          { timestamp: '2024-01-20T12:30:05Z', level: 'info', message: 'Started processing customer inquiries queue' },
+          { timestamp: '2024-01-20T12:31:15Z', level: 'error', message: 'Failed to connect to customer database after 3 retries' }
         ]
       }
-    })
+    }),
+    // Running execution for agent 1
+    prisma.execution.create({
+      data: {
+        agentId: agents[1].id,
+        status: 'RUNNING',
+        startTime: new Date('2024-01-20T16:00:00Z'),
+        triggeredById: users[0].id,
+        logs: [
+          { timestamp: '2024-01-20T16:00:05Z', level: 'info', message: 'Starting data analysis pipeline for dataset batch #2024-01-20-001' },
+          { timestamp: '2024-01-20T16:05:30Z', level: 'info', message: 'Preprocessing completed - 15,000 records processed' },
+          { timestamp: '2024-01-20T16:10:45Z', level: 'info', message: 'Analysis phase 1/3 completed - feature extraction done' }
+        ]
+      }
+    }),
+    // Successful execution for agent 1
+    prisma.execution.create({
+      data: {
+        agentId: agents[1].id,
+        status: 'SUCCESS',
+        startTime: new Date('2024-01-20T14:00:00Z'),
+        endTime: new Date('2024-01-20T15:45:30Z'),
+        result: 'Generated insights report for Q4 sales data - identified 3 key trends',
+        triggeredById: users[0].id,
+        logs: [
+          { timestamp: '2024-01-20T14:00:05Z', level: 'info', message: 'Starting analysis of Q4 sales data' },
+          { timestamp: '2024-01-20T15:30:00Z', level: 'info', message: 'Pattern analysis completed - generating report' },
+          { timestamp: '2024-01-20T15:45:25Z', level: 'info', message: 'Report generated successfully and saved to output directory' }
+        ]
+      }
+    }),
+    // Failed execution for agent 1
+    prisma.execution.create({
+      data: {
+        agentId: agents[1].id,
+        status: 'FAILED',
+        startTime: new Date('2024-01-19T10:00:00Z'),
+        endTime: new Date('2024-01-19T10:15:45Z'),
+        error: 'Insufficient memory to process large dataset',
+        triggeredById: users[0].id,
+        logs: [
+          { timestamp: '2024-01-19T10:00:05Z', level: 'info', message: 'Starting analysis of customer behavior dataset' },
+          { timestamp: '2024-01-19T10:12:30Z', level: 'warn', message: 'Memory usage approaching 95% threshold' },
+          { timestamp: '2024-01-19T10:15:40Z', level: 'error', message: 'OutOfMemoryError: Unable to process dataset of size 2.3GB' }
+        ]
+      }
+    }),
+    // Execution for agent 2 (Content Moderator)
+    prisma.execution.create({
+      data: {
+        agentId: agents[2].id,
+        status: 'SUCCESS',
+        startTime: new Date('2024-01-20T12:00:00Z'),
+        endTime: new Date('2024-01-20T12:05:20Z'),
+        result: 'Moderated 127 content items, flagged 8 for review',
+        triggeredById: users[2].id,
+        logs: [
+          { timestamp: '2024-01-20T12:00:05Z', level: 'info', message: 'Starting content moderation batch process' },
+          { timestamp: '2024-01-20T12:03:15Z', level: 'warn', message: 'Flagged potentially inappropriate content item #CN-789123' },
+          { timestamp: '2024-01-20T12:05:15Z', level: 'info', message: 'Batch moderation completed successfully' }
+        ]
+      }
+    }),
+    // Running execution for agent 2
+    prisma.execution.create({
+      data: {
+        agentId: agents[2].id,
+        status: 'RUNNING',
+        startTime: new Date('2024-01-20T18:00:00Z'),
+        triggeredById: users[2].id,
+        logs: [
+          { timestamp: '2024-01-20T18:00:05Z', level: 'info', message: 'Starting evening content moderation batch' },
+          { timestamp: '2024-01-20T18:05:30Z', level: 'info', message: 'Processing user-generated content from last 4 hours' },
+          { timestamp: '2024-01-20T18:10:45Z', level: 'info', message: 'Phase 1/3 completed - text content analysis done' }
+        ]
+      }
+    }),
+    // Pending execution for agent 3 (if exists)
+    ...(agents.length > 3 ? [
+      prisma.execution.create({
+        data: {
+          agentId: agents[3].id,
+          status: 'PENDING',
+          startTime: new Date('2024-01-20T17:00:00Z'),
+          triggeredById: users[1].id,
+          logs: [
+            { timestamp: '2024-01-20T17:00:00Z', level: 'info', message: 'Lead qualification job queued for execution' }
+          ]
+        }
+      })
+    ] : [])
   ]);
 
   console.log(`✅ Created ${users.length} users, ${agents.length} agents and ${executions.length} executions`);

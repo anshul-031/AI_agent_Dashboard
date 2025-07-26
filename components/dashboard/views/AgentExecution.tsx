@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
   Select, 
@@ -12,6 +14,13 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { 
   ArrowLeft, 
   Play, 
@@ -25,36 +34,55 @@ import {
   Download,
   RefreshCw
 } from 'lucide-react'
-import { mockAgents, mockExecutions } from '@/lib/mock-data'
+import { useAgentExecutions, useExecutionLogs } from '@/hooks/use-database'
 import { Execution } from '@/types/agent'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface AgentExecutionProps {
   agentId: string | null
   onViewFlowchart: (agentId: string) => void
+  onBack?: () => void
 }
 
-export function AgentExecution({ agentId, onViewFlowchart }: AgentExecutionProps) {
+export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecutionProps) {
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [selectedExecution, setSelectedExecution] = useState<string | null>(null)
+  const [startTimeFrom, setStartTimeFrom] = useState<string>('')
+  const [startTimeTo, setStartTimeTo] = useState<string>('')
+  const [isRunning, setIsRunning] = useState(false)
   
-  const agent = agentId ? mockAgents.find(a => a.id === agentId) : null
-  const executions = useMemo(() => {
-    if (!agentId) return []
-    const agentExecutions = mockExecutions.filter(e => e.agentId === agentId)
-    if (statusFilter === 'all') return agentExecutions
-    return agentExecutions.filter(e => e.status === statusFilter)
-  }, [agentId, statusFilter])
+  // Fetch executions using the new API hook
+  const { 
+    executions, 
+    agent, 
+    loading: executionsLoading, 
+    error: executionsError,
+    refetch: refetchExecutions
+  } = useAgentExecutions(agentId || '', {
+    status: statusFilter === 'all' ? undefined : statusFilter,
+    startTimeFrom: startTimeFrom || undefined,
+    startTimeTo: startTimeTo || undefined,
+    limit: 50
+  })
+  
+  // Fetch logs for selected execution
+  const { 
+    logs, 
+    loading: logsLoading 
+  } = useExecutionLogs(selectedExecution || '', {
+    limit: 100
+  })
 
   const executionStats = useMemo(() => {
-    if (!agentId) return { total: 0, success: 0, failed: 0, running: 0 }
-    const agentExecutions = mockExecutions.filter(e => e.agentId === agentId)
+    if (!executions.length) return { total: 0, success: 0, failed: 0, running: 0, pending: 0 }
     return {
-      total: agentExecutions.length,
-      success: agentExecutions.filter(e => e.status === 'success').length,
-      failed: agentExecutions.filter(e => e.status === 'failed').length,
-      running: agentExecutions.filter(e => e.status === 'running').length
+      total: executions.length,
+      success: executions.filter(e => e.status === 'success').length,
+      failed: executions.filter(e => e.status === 'failed').length,
+      running: executions.filter(e => e.status === 'running').length,
+      pending: executions.filter(e => e.status === 'pending').length
     }
-  }, [agentId])
+  }, [executions])
 
   const getStatusIcon = (status: Execution['status']) => {
     switch (status) {
@@ -96,7 +124,7 @@ export function AgentExecution({ agentId, onViewFlowchart }: AgentExecutionProps
     return `${seconds}s`
   }
 
-  if (!agent) {
+  if (!agentId) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
@@ -110,55 +138,146 @@ export function AgentExecution({ agentId, onViewFlowchart }: AgentExecutionProps
     )
   }
 
+  if (executionsLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <RefreshCw className="mx-auto h-12 w-12 text-muted-foreground animate-spin" />
+          <h3 className="mt-2 text-sm font-semibold">Loading executions...</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Fetching execution history for the agent
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (executionsError) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <XCircle className="mx-auto h-12 w-12 text-red-500" />
+          <h3 className="mt-2 text-sm font-semibold">Failed to load executions</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {executionsError}
+          </p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-4"
+            onClick={() => refetchExecutions()}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Try Again
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="sm" onClick={() => window.history.back()}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => onBack ? onBack() : window.history.back()}
+          >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">{agent.name}</h2>
-            <p className="text-muted-foreground">{agent.description}</p>
+            <h2 className="text-3xl font-bold tracking-tight">{agent?.name || 'Unknown Agent'}</h2>
+            <p className="text-muted-foreground">
+              {agent ? `Category: ${agent.category}` : 'Loading agent details...'}
+            </p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={() => onViewFlowchart(agent.id)}>
+          <Button variant="outline" onClick={() => agent && onViewFlowchart(agent.id)}>
             <GitBranch className="mr-2 h-4 w-4" />
             View Flowchart
           </Button>
-          <Button variant="outline">
+          <Button 
+            variant="outline"
+            onClick={() => {
+              // Export execution logs as JSON
+              const data = JSON.stringify(executions, null, 2);
+              const blob = new Blob([data], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `agent-${agentId}-executions.json`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+          >
             <Download className="mr-2 h-4 w-4" />
             Export Logs
           </Button>
-          <Button>
-            <Play className="mr-2 h-4 w-4" />
-            Run Agent
+          <Button 
+            onClick={async () => {
+              if (!agentId) return;
+              
+              setIsRunning(true);
+              try {
+                // Create a new execution
+                const response = await fetch('/api/executions', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    agentId: agentId,
+                    status: 'PENDING'
+                  })
+                });
+                
+                if (response.ok) {
+                  // Refresh the execution data to show the new execution
+                  refetchExecutions();
+                } else {
+                  throw new Error('Failed to start execution');
+                }
+              } catch (error) {
+                console.error('Error starting agent:', error);
+                alert('Failed to start agent execution. Please try again.');
+              } finally {
+                setIsRunning(false);
+              }
+            }}
+            disabled={isRunning || !agentId}
+          >
+            {isRunning ? (
+              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Play className="mr-2 h-4 w-4" />
+            )}
+            {isRunning ? 'Starting...' : 'Run Agent'}
           </Button>
         </div>
       </div>
 
-      {/* Agent Status and Controls */}
+      {/* Agent Info and Controls */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center space-x-2">
-                <span>Agent Status</span>
-                <Badge variant={getStatusVariant(agent.status as any)}>
-                  {agent.status}
-                </Badge>
+                <span>Agent Information</span>
               </CardTitle>
               <CardDescription>
-                Category: {agent.category} • Created: {new Date(agent.createdAt).toLocaleDateString()}
+                {agent ? `Category: ${agent.category}` : 'Loading agent details...'}
               </CardDescription>
             </div>
             <div className="flex space-x-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" disabled>
                 <Pause className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" disabled>
                 <RotateCcw className="h-4 w-4" />
               </Button>
             </div>
@@ -216,18 +335,55 @@ export function AgentExecution({ agentId, onViewFlowchart }: AgentExecutionProps
                 Recent execution logs and details
               </CardDescription>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="success">Success</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-                <SelectItem value="running">Running</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center space-x-4">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="success">Success</SelectItem>
+                  <SelectItem value="failed">Failed</SelectItem>
+                  <SelectItem value="running">Running</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="start-from" className="text-sm">From:</Label>
+                <Input
+                  id="start-from"
+                  type="datetime-local"
+                  value={startTimeFrom}
+                  onChange={(e) => setStartTimeFrom(e.target.value)}
+                  className="w-[200px]"
+                />
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="start-to" className="text-sm">To:</Label>
+                <Input
+                  id="start-to"
+                  type="datetime-local"
+                  value={startTimeTo}
+                  onChange={(e) => setStartTimeTo(e.target.value)}
+                  className="w-[200px]"
+                />
+              </div>
+              
+              {(startTimeFrom || startTimeTo) && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setStartTimeFrom('')
+                    setStartTimeTo('')
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -238,42 +394,110 @@ export function AgentExecution({ agentId, onViewFlowchart }: AgentExecutionProps
             </TabsList>
             <TabsContent value="list" className="space-y-4">
               <ScrollArea className="h-96">
-                <div className="space-y-2">
-                  {executions.map((execution) => (
-                    <Card key={execution.id} className="p-4 hover:shadow-sm transition-shadow">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          {getStatusIcon(execution.status)}
-                          <div>
-                            <p className="font-medium">Execution #{execution.id}</p>
-                            <p className="text-sm text-muted-foreground">
-                              Started: {new Date(execution.startTime).toLocaleString()}
-                            </p>
+                {executions.length > 0 ? (
+                  <div className="space-y-2">
+                    {executions.map((execution) => (
+                      <Card key={execution.id} className="p-4 hover:shadow-sm transition-shadow">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            {getStatusIcon(execution.status)}
+                            <div>
+                              <p className="font-medium">Execution #{execution.id}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Started: {new Date(execution.startTime).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant={getStatusVariant(execution.status)}>
+                              {execution.status}
+                            </Badge>
+                            {execution.endTime && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Duration: {formatDuration(
+                                  new Date(execution.endTime).getTime() - 
+                                  new Date(execution.startTime).getTime()
+                                )}
+                              </p>
+                            )}
                           </div>
                         </div>
-                        <div className="text-right">
-                          <Badge variant={getStatusVariant(execution.status)}>
-                            {execution.status}
-                          </Badge>
-                          {execution.endTime && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Duration: {formatDuration(
-                                new Date(execution.endTime).getTime() - 
-                                new Date(execution.startTime).getTime()
-                              )}
-                            </p>
-                          )}
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full py-12">
+                    <div className="text-center space-y-4 max-w-md">
+                      {/* Illustration */}
+                      <div className="mx-auto w-32 h-32 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
+                        <div className="w-16 h-16 bg-gradient-to-br from-blue-200 to-indigo-200 rounded-full flex items-center justify-center">
+                          <Clock className="w-8 h-8 text-blue-600" />
                         </div>
                       </div>
-                    </Card>
-                  ))}
-                </div>
+                      
+                      {/* Text */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">No Execution History</h3>
+                        <p className="text-sm text-gray-600 mt-2">
+                          This agent hasn&apos;t been executed yet. Click &quot;Run Agent&quot; to start your first execution.
+                        </p>
+                      </div>
+                      
+                      {/* Action Button */}
+                      <Button 
+                        onClick={async () => {
+                          if (!agentId) return;
+                          
+                          setIsRunning(true);
+                          try {
+                            const response = await fetch('/api/executions', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                              },
+                              body: JSON.stringify({
+                                agentId: agentId,
+                                status: 'PENDING'
+                              })
+                            });
+                            
+                            if (response.ok) {
+                              refetchExecutions();
+                            } else {
+                              throw new Error('Failed to start execution');
+                            }
+                          } catch (error) {
+                            console.error('Error starting agent:', error);
+                            alert('Failed to start agent execution. Please try again.');
+                          } finally {
+                            setIsRunning(false);
+                          }
+                        }}
+                        disabled={isRunning || !agentId}
+                        className="mt-4"
+                      >
+                        {isRunning ? (
+                          <>
+                            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                            Starting...
+                          </>
+                        ) : (
+                          <>
+                            <Play className="mr-2 h-4 w-4" />
+                            Run Agent Now
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </ScrollArea>
             </TabsContent>
             <TabsContent value="details" className="space-y-4">
               <ScrollArea className="h-96">
-                <div className="space-y-4">
-                  {executions.map((execution) => (
+                {executions.length > 0 ? (
+                  <div className="space-y-4">
+                    {executions.map((execution) => (
                     <Card key={execution.id}>
                       <CardHeader>
                         <div className="flex items-center justify-between">
@@ -281,9 +505,18 @@ export function AgentExecution({ agentId, onViewFlowchart }: AgentExecutionProps
                             {getStatusIcon(execution.status)}
                             <span>Execution #{execution.id}</span>
                           </CardTitle>
-                          <Badge variant={getStatusVariant(execution.status)}>
-                            {execution.status}
-                          </Badge>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => setSelectedExecution(execution.id)}
+                            >
+                              View Logs
+                            </Button>
+                            <Badge variant={getStatusVariant(execution.status)}>
+                              {execution.status}
+                            </Badge>
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent>
@@ -313,7 +546,7 @@ export function AgentExecution({ agentId, onViewFlowchart }: AgentExecutionProps
                           <div className="mt-4">
                             <h4 className="font-medium mb-2">Recent Logs</h4>
                             <div className="bg-muted p-3 rounded-md text-sm font-mono">
-                              {execution.logs.slice(-3).map((log, index) => (
+                              {execution.logs.slice(-3).map((log: any, index: number) => (
                                 <div key={index} className="mb-1">
                                   <span className="text-muted-foreground">
                                     {new Date(log.timestamp).toLocaleTimeString()}
@@ -334,12 +567,123 @@ export function AgentExecution({ agentId, onViewFlowchart }: AgentExecutionProps
                       </CardContent>
                     </Card>
                   ))}
-                </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full py-12">
+                    <div className="text-center space-y-4 max-w-md">
+                      {/* Illustration */}
+                      <div className="mx-auto w-32 h-32 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
+                        <div className="w-16 h-16 bg-gradient-to-br from-purple-200 to-pink-200 rounded-full flex items-center justify-center">
+                          <AlertCircle className="w-8 h-8 text-purple-600" />
+                        </div>
+                      </div>
+                      
+                      {/* Text */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">No Detailed Executions</h3>
+                        <p className="text-sm text-gray-600 mt-2">
+                          No execution records found. Start by running the agent to see detailed execution information.
+                        </p>
+                      </div>
+                      
+                      {/* Action Button */}
+                      <Button 
+                        onClick={async () => {
+                          if (!agentId) return;
+                          
+                          setIsRunning(true);
+                          try {
+                            const response = await fetch('/api/executions', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                              },
+                              body: JSON.stringify({
+                                agentId: agentId,
+                                status: 'PENDING'
+                              })
+                            });
+                            
+                            if (response.ok) {
+                              refetchExecutions();
+                            } else {
+                              throw new Error('Failed to start execution');
+                            }
+                          } catch (error) {
+                            console.error('Error starting agent:', error);
+                            alert('Failed to start agent execution. Please try again.');
+                          } finally {
+                            setIsRunning(false);
+                          }
+                        }}
+                        disabled={isRunning || !agentId}
+                        className="mt-4"
+                        variant="outline"
+                      >
+                        {isRunning ? (
+                          <>
+                            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                            Starting...
+                          </>
+                        ) : (
+                          <>
+                            <Play className="mr-2 h-4 w-4" />
+                            Run Agent Now
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </ScrollArea>
             </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Execution Logs Modal */}
+      <Dialog open={!!selectedExecution} onOpenChange={() => setSelectedExecution(null)}>
+        <DialogContent className="max-w-4xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Execution Logs</DialogTitle>
+            <DialogDescription>
+              Detailed logs for execution #{selectedExecution?.slice(-8)}
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="h-[60vh] w-full rounded-md border p-4">
+            {logsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <RefreshCw className="h-6 w-6 animate-spin" />
+                <span className="ml-2">Loading logs...</span>
+              </div>
+            ) : logs.length > 0 ? (
+              <div className="space-y-2 font-mono text-sm">
+                {logs.map((log: any, index: number) => (
+                  <div key={index} className="flex items-start space-x-2 py-1">
+                    <span className="text-muted-foreground text-xs shrink-0 w-20">
+                      {new Date(log.timestamp).toLocaleTimeString()}
+                    </span>
+                    <span className={`
+                      text-xs px-2 py-1 rounded shrink-0 w-16 text-center
+                      ${log.level === 'error' ? 'bg-red-100 text-red-800' :
+                        log.level === 'warn' ? 'bg-yellow-100 text-yellow-800' :
+                        log.level === 'info' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'}
+                    `}>
+                      {log.level.toUpperCase()}
+                    </span>
+                    <span className="flex-1">{log.message}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No logs available for this execution
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

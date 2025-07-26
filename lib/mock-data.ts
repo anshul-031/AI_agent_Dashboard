@@ -262,6 +262,300 @@ export const mockExecutions: Execution[] = [
         message: 'Lead qualification job queued for execution'
       }
     ]
+  },
+  // Additional executions for Agent 1 (Customer Support Bot)
+  {
+    id: 'exec-1-004',
+    agentId: '1',
+    status: 'success',
+    startTime: '2024-01-19T09:15:00Z',
+    endTime: '2024-01-19T09:18:30Z',
+    result: 'Processed 28 customer inquiries, escalated 2 to human agents',
+    logs: [
+      {
+        timestamp: '2024-01-19T09:15:05Z',
+        level: 'info',
+        message: 'Started processing morning inquiry batch'
+      },
+      {
+        timestamp: '2024-01-19T09:17:15Z',
+        level: 'info',
+        message: 'Resolved billing inquiry #BL-45612'
+      },
+      {
+        timestamp: '2024-01-19T09:18:25Z',
+        level: 'info',
+        message: 'Batch processing completed successfully'
+      }
+    ]
+  },
+  {
+    id: 'exec-1-005',
+    agentId: '1',
+    status: 'failed',
+    startTime: '2024-01-18T16:45:00Z',
+    endTime: '2024-01-18T16:46:15Z',
+    error: 'API rate limit exceeded for external service',
+    logs: [
+      {
+        timestamp: '2024-01-18T16:45:05Z',
+        level: 'info',
+        message: 'Starting customer inquiry processing'
+      },
+      {
+        timestamp: '2024-01-18T16:46:10Z',
+        level: 'error',
+        message: 'Rate limit exceeded for payment service API - 429 Too Many Requests'
+      }
+    ]
+  },
+  // Additional executions for Agent 2 (Data Analysis Pipeline)
+  {
+    id: 'exec-2-003',
+    agentId: '2',
+    status: 'failed',
+    startTime: '2024-01-19T10:00:00Z',
+    endTime: '2024-01-19T10:15:45Z',
+    error: 'Insufficient memory to process large dataset',
+    logs: [
+      {
+        timestamp: '2024-01-19T10:00:05Z',
+        level: 'info',
+        message: 'Starting analysis of customer behavior dataset'
+      },
+      {
+        timestamp: '2024-01-19T10:12:30Z',
+        level: 'warn',
+        message: 'Memory usage approaching 95% threshold'
+      },
+      {
+        timestamp: '2024-01-19T10:15:40Z',
+        level: 'error',
+        message: 'OutOfMemoryError: Unable to process dataset of size 2.3GB'
+      }
+    ]
+  },
+  {
+    id: 'exec-2-004',
+    agentId: '2',
+    status: 'success',
+    startTime: '2024-01-18T08:30:00Z',
+    endTime: '2024-01-18T09:45:20Z',
+    result: 'Analyzed user engagement patterns - generated recommendations for 5 product categories',
+    logs: [
+      {
+        timestamp: '2024-01-18T08:30:05Z',
+        level: 'info',
+        message: 'Loading user engagement dataset (850MB)'
+      },
+      {
+        timestamp: '2024-01-18T08:45:30Z',
+        level: 'info',
+        message: 'Preprocessing completed - 1.2M records processed'
+      },
+      {
+        timestamp: '2024-01-18T09:30:15Z',
+        level: 'info',
+        message: 'Pattern recognition completed - 15 significant patterns identified'
+      },
+      {
+        timestamp: '2024-01-18T09:45:15Z',
+        level: 'info',
+        message: 'Report generated with actionable recommendations'
+      }
+    ]
+  },
+  // Additional executions for Agent 3 (Content Moderator)
+  {
+    id: 'exec-3-002',
+    agentId: '3',
+    status: 'success',
+    startTime: '2024-01-19T14:30:00Z',
+    endTime: '2024-01-19T14:33:45Z',
+    result: 'Moderated 89 content items, flagged 12 for human review',
+    logs: [
+      {
+        timestamp: '2024-01-19T14:30:05Z',
+        level: 'info',
+        message: 'Starting content moderation for forum posts'
+      },
+      {
+        timestamp: '2024-01-19T14:31:20Z',
+        level: 'warn',
+        message: 'Flagged post #FP-34567 for potential spam content'
+      },
+      {
+        timestamp: '2024-01-19T14:32:45Z',
+        level: 'warn',
+        message: 'Flagged image #IMG-78901 for inappropriate content'
+      },
+      {
+        timestamp: '2024-01-19T14:33:40Z',
+        level: 'info',
+        message: 'Moderation batch completed successfully'
+      }
+    ]
+  },
+  {
+    id: 'exec-3-003',
+    agentId: '3',
+    status: 'running',
+    startTime: '2024-01-20T18:00:00Z',
+    logs: [
+      {
+        timestamp: '2024-01-20T18:00:05Z',
+        level: 'info',
+        message: 'Starting evening content moderation batch'
+      },
+      {
+        timestamp: '2024-01-20T18:05:30Z',
+        level: 'info',
+        message: 'Processing user-generated content from last 4 hours'
+      },
+      {
+        timestamp: '2024-01-20T18:10:45Z',
+        level: 'info',
+        message: 'Phase 1/3 completed - text content analysis done'
+      }
+    ]
+  },
+  // Additional executions for Agent 4 (Sales Lead Qualifier)
+  {
+    id: 'exec-4-002',
+    agentId: '4',
+    status: 'failed',
+    startTime: '2024-01-19T11:00:00Z',
+    endTime: '2024-01-19T11:02:30Z',
+    error: 'CRM integration failure - authentication expired',
+    logs: [
+      {
+        timestamp: '2024-01-19T11:00:05Z',
+        level: 'info',
+        message: 'Starting lead qualification for 25 new prospects'
+      },
+      {
+        timestamp: '2024-01-19T11:02:25Z',
+        level: 'error',
+        message: 'CRM authentication failed - token expired, unable to sync lead data'
+      }
+    ]
+  },
+  {
+    id: 'exec-4-003',
+    agentId: '4',
+    status: 'success',
+    startTime: '2024-01-18T15:30:00Z',
+    endTime: '2024-01-18T15:35:20Z',
+    result: 'Qualified 18 leads, identified 6 high-priority prospects for immediate follow-up',
+    logs: [
+      {
+        timestamp: '2024-01-18T15:30:05Z',
+        level: 'info',
+        message: 'Loading lead data from CRM integration'
+      },
+      {
+        timestamp: '2024-01-18T15:32:15Z',
+        level: 'info',
+        message: 'Applying qualification scoring model v2.1'
+      },
+      {
+        timestamp: '2024-01-18T15:34:30Z',
+        level: 'info',
+        message: 'High-value lead detected: TechCorp Industries (Score: 92/100)'
+      },
+      {
+        timestamp: '2024-01-18T15:35:15Z',
+        level: 'info',
+        message: 'Lead qualification completed - results synced to CRM'
+      }
+    ]
+  },
+  // Executions for Agent 5 (Inventory Manager)
+  {
+    id: 'exec-5-001',
+    agentId: '5',
+    status: 'success',
+    startTime: '2024-01-17T07:00:00Z',
+    endTime: '2024-01-17T07:12:45Z',
+    result: 'Monitored 450 SKUs, triggered 8 automatic reorders, flagged 3 supplier issues',
+    logs: [
+      {
+        timestamp: '2024-01-17T07:00:05Z',
+        level: 'info',
+        message: 'Starting daily inventory monitoring cycle'
+      },
+      {
+        timestamp: '2024-01-17T07:05:30Z',
+        level: 'info',
+        message: 'Low stock alert: Product SKU-12345 (15 units remaining)'
+      },
+      {
+        timestamp: '2024-01-17T07:08:15Z',
+        level: 'warn',
+        message: 'Supplier timeout for Product SKU-67890 - escalating to procurement'
+      },
+      {
+        timestamp: '2024-01-17T07:12:40Z',
+        level: 'info',
+        message: 'Inventory monitoring completed - 8 reorders initiated'
+      }
+    ]
+  },
+  {
+    id: 'exec-5-002',
+    agentId: '5',
+    status: 'failed',
+    startTime: '2024-01-16T07:00:00Z',
+    endTime: '2024-01-16T07:05:30Z',
+    error: 'ERP system unavailable - unable to fetch current inventory levels',
+    logs: [
+      {
+        timestamp: '2024-01-16T07:00:05Z',
+        level: 'info',
+        message: 'Attempting to connect to ERP system for inventory data'
+      },
+      {
+        timestamp: '2024-01-16T07:03:20Z',
+        level: 'warn',
+        message: 'ERP connection timeout - retrying with backup endpoint'
+      },
+      {
+        timestamp: '2024-01-16T07:05:25Z',
+        level: 'error',
+        message: 'All ERP endpoints unavailable - inventory monitoring failed'
+      }
+    ]
+  },
+  // Executions for Agent 6 (Email Campaign Optimizer)
+  {
+    id: 'exec-6-001',
+    agentId: '6',
+    status: 'success',
+    startTime: '2024-01-19T13:00:00Z',
+    endTime: '2024-01-19T13:25:15Z',
+    result: 'Optimized 3 email campaigns, improved open rates by 12%, increased CTR by 8%',
+    logs: [
+      {
+        timestamp: '2024-01-19T13:00:05Z',
+        level: 'info',
+        message: 'Starting email campaign optimization analysis'
+      },
+      {
+        timestamp: '2024-01-19T13:10:30Z',
+        level: 'info',
+        message: 'A/B test results analyzed for subject line variants'
+      },
+      {
+        timestamp: '2024-01-19T13:20:45Z',
+        level: 'info',
+        message: 'Optimal send time identified: Tuesday 10:30 AM'
+      },
+      {
+        timestamp: '2024-01-19T13:25:10Z',
+        level: 'info',
+        message: 'Campaign optimizations applied and scheduled'
+      }
+    ]
   }
 ]
 

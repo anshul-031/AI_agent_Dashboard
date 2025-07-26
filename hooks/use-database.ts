@@ -154,3 +154,126 @@ export function useAgentWithFlowchart(agentId: string) {
 
   return { agent, flowchart, loading, error };
 }
+
+// Custom hook for fetching agent executions with advanced filtering
+export function useAgentExecutions(agentId: string, filters?: {
+  status?: string;
+  startTimeFrom?: string;
+  startTimeTo?: string;
+  endTimeFrom?: string;
+  endTimeTo?: string;
+  page?: number;
+  limit?: number;
+}) {
+  const [data, setData] = useState<{
+    executions: any[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    agent?: {
+      id: string;
+      name: string;
+      category: string;
+    };
+  }>({
+    executions: [],
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  useEffect(() => {
+    const fetchAgentExecutions = async () => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams();
+        
+        if (filters?.status) params.append('status', filters.status);
+        if (filters?.startTimeFrom) params.append('startTimeFrom', filters.startTimeFrom);
+        if (filters?.startTimeTo) params.append('startTimeTo', filters.startTimeTo);
+        if (filters?.endTimeFrom) params.append('endTimeFrom', filters.endTimeFrom);
+        if (filters?.endTimeTo) params.append('endTimeTo', filters.endTimeTo);
+        if (filters?.page) params.append('page', filters.page.toString());
+        if (filters?.limit) params.append('limit', filters.limit.toString());
+
+        const response = await fetch(`/api/agents/${agentId}/executions?${params}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch agent executions');
+        }
+        
+        const responseData = await response.json();
+        setData(responseData);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (agentId) {
+      fetchAgentExecutions();
+    }
+  }, [agentId, filters?.status, filters?.startTimeFrom, filters?.startTimeTo, filters?.endTimeFrom, filters?.endTimeTo, filters?.page, filters?.limit, refreshTrigger]);
+
+  return { 
+    executions: data.executions, 
+    total: data.total,
+    page: data.page,
+    limit: data.limit,
+    totalPages: data.totalPages,
+    agent: data.agent,
+    loading, 
+    error,
+    refetch: () => {
+      // Trigger a re-fetch by incrementing the refresh trigger
+      setRefreshTrigger(prev => prev + 1);
+    }
+  };
+}
+
+// Custom hook for fetching execution logs
+export function useExecutionLogs(executionId: string, filters?: {
+  level?: string;
+  limit?: number;
+}) {
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams();
+        
+        if (filters?.level) params.append('level', filters.level);
+        if (filters?.limit) params.append('limit', filters.limit.toString());
+
+        const response = await fetch(`/api/executions/${executionId}/logs?${params}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch execution logs');
+        }
+        
+        const data = await response.json();
+        setLogs(data.logs);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (executionId) {
+      fetchLogs();
+    }
+  }, [executionId, filters?.level, filters?.limit]);
+
+  return { logs, loading, error };
+}

@@ -32,6 +32,10 @@ export function Dashboard() {
               setSelectedAgentId(agentId)
               setCurrentView('flowchart')
             }}
+            onBack={() => {
+              setCurrentView('overview')
+              setSelectedAgentId(null)
+            }}
           />
         )
       case 'flowchart':
