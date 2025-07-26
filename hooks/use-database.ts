@@ -1,5 +1,22 @@
 import { useState, useEffect } from 'react';
 
+// Utility function to get auth token
+const getAuthToken = (): string | null => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('auth-token');
+  }
+  return null;
+};
+
+// Utility function to create authenticated fetch options
+const getAuthHeaders = () => {
+  const token = getAuthToken();
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  };
+};
+
 // Custom hook for fetching agents
 export function useAgents(filters?: {
   status?: string;
@@ -19,7 +36,9 @@ export function useAgents(filters?: {
         if (filters?.category) params.append('category', filters.category);
         if (filters?.search) params.append('search', filters.search);
 
-        const response = await fetch(`/api/agents?${params}`);
+        const response = await fetch(`/api/agents?${params}`, {
+          headers: getAuthHeaders()
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch agents');
         }
@@ -54,7 +73,9 @@ export function useExecutions(agentId?: string, limit: number = 50) {
         if (agentId) params.append('agentId', agentId);
         params.append('limit', limit.toString());
 
-        const response = await fetch(`/api/executions?${params}`);
+        const response = await fetch(`/api/executions?${params}`, {
+          headers: getAuthHeaders()
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch executions');
         }
@@ -85,7 +106,9 @@ export function useDashboardStats() {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/dashboard/stats');
+        const response = await fetch('/api/dashboard/stats', {
+          headers: getAuthHeaders()
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch dashboard stats');
         }
@@ -120,8 +143,8 @@ export function useAgentWithFlowchart(agentId: string) {
         
         // Fetch agent and flowchart in parallel
         const [agentResponse, flowchartResponse] = await Promise.all([
-          fetch(`/api/agents/${agentId}`),
-          fetch(`/api/agents/${agentId}/flowchart`)
+          fetch(`/api/agents/${agentId}`, { headers: getAuthHeaders() }),
+          fetch(`/api/agents/${agentId}/flowchart`, { headers: getAuthHeaders() })
         ]);
 
         if (!agentResponse.ok) {
@@ -201,7 +224,9 @@ export function useAgentExecutions(agentId: string, filters?: {
         if (filters?.page) params.append('page', filters.page.toString());
         if (filters?.limit) params.append('limit', filters.limit.toString());
 
-        const response = await fetch(`/api/agents/${agentId}/executions?${params}`);
+        const response = await fetch(`/api/agents/${agentId}/executions?${params}`, {
+          headers: getAuthHeaders()
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch agent executions');
         }
@@ -255,7 +280,9 @@ export function useExecutionLogs(executionId: string, filters?: {
         if (filters?.level) params.append('level', filters.level);
         if (filters?.limit) params.append('limit', filters.limit.toString());
 
-        const response = await fetch(`/api/executions/${executionId}/logs?${params}`);
+        const response = await fetch(`/api/executions/${executionId}/logs?${params}`, {
+          headers: getAuthHeaders()
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch execution logs');
         }

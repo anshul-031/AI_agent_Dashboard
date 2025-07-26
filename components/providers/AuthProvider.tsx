@@ -25,37 +25,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [token, setToken] = useState<string | null>(null)
 
-  useEffect(() => {
-    // Check for existing session
-    const checkAuth = async () => {
-      const savedToken = localStorage.getItem('auth-token')
-      if (savedToken) {
-        try {
-          const response = await fetch('/api/auth/me', {
-            headers: {
-              'Authorization': `Bearer ${savedToken}`
-            }
-          })
-          
-          if (response.ok) {
-            const data = await response.json()
-            setUser(data.user)
-            setToken(savedToken)
-          } else {
-            // Token is invalid, remove it
-            localStorage.removeItem('auth-token')
-          }
-        } catch (error) {
-          console.error('Auth check failed:', error)
-          localStorage.removeItem('auth-token')
-        }
-      }
-      setLoading(false)
-    }
-
-    checkAuth()
-  }, [])
-
   const login = async (email: string, password: string) => {
     setLoading(true)
     
@@ -84,6 +53,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    // Check for existing session
+    const checkAuth = async () => {
+      const savedToken = localStorage.getItem('auth-token')
+      if (savedToken) {
+        try {
+          const response = await fetch('/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${savedToken}`
+            }
+          })
+          
+          if (response.ok) {
+            const data = await response.json()
+            setUser(data.user)
+            setToken(savedToken)
+          } else {
+            // Token is invalid, remove it
+            localStorage.removeItem('auth-token')
+          }
+        } catch (error) {
+          console.error('Auth check failed:', error)
+          localStorage.removeItem('auth-token')
+        }
+      } else if (process.env.NODE_ENV === 'development') {
+        // Auto-login in development with default admin credentials
+        try {
+          const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: 'admin@company.com', password: 'password' }),
+          })
+
+          if (response.ok) {
+            const data = await response.json()
+            setUser(data.user)
+            setToken(data.token)
+            localStorage.setItem('auth-token', data.token)
+            console.log('Auto-logged in with admin credentials for development')
+          }
+        } catch (error) {
+          console.log('Auto-login failed, user will need to login manually')
+        }
+      }
+      setLoading(false)
+    }
+
+    checkAuth()
+  }, [])
 
   const logout = async () => {
     try {

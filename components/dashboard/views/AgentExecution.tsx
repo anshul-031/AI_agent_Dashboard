@@ -32,11 +32,13 @@ import {
   XCircle,
   AlertCircle,
   Download,
-  RefreshCw
+  RefreshCw,
+  CalendarIcon
 } from 'lucide-react'
 import { useAgentExecutions, useExecutionLogs } from '@/hooks/use-database'
 import { Execution } from '@/types/agent'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { DateTimePicker } from '@/components/ui/date-picker'
 
 interface AgentExecutionProps {
   agentId: string | null
@@ -47,9 +49,25 @@ interface AgentExecutionProps {
 export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecutionProps) {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [selectedExecution, setSelectedExecution] = useState<string | null>(null)
-  const [startTimeFrom, setStartTimeFrom] = useState<string>('')
-  const [startTimeTo, setStartTimeTo] = useState<string>('')
+  const [startTimeFrom, setStartTimeFrom] = useState<Date | undefined>()
+  const [startTimeTo, setStartTimeTo] = useState<Date | undefined>()
   const [isRunning, setIsRunning] = useState(false)
+  
+  // Utility function to get auth headers
+  const getAuthHeaders = () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth-token') : null;
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+  };
+  
+  // Function to generate random status
+  const getRandomStatus = (): 'success' | 'failed' | 'running' | 'pending' => {
+    const statuses: ('success' | 'failed' | 'running' | 'pending')[] = ['success', 'failed', 'running', 'pending']
+    const randomIndex = Math.floor(Math.random() * statuses.length)
+    return statuses[randomIndex]
+  }
   
   // Fetch executions using the new API hook
   const { 
@@ -60,8 +78,8 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
     refetch: refetchExecutions
   } = useAgentExecutions(agentId || '', {
     status: statusFilter === 'all' ? undefined : statusFilter,
-    startTimeFrom: startTimeFrom || undefined,
-    startTimeTo: startTimeTo || undefined,
+    startTimeFrom: startTimeFrom?.toISOString(),
+    startTimeTo: startTimeTo?.toISOString(),
     limit: 50
   })
   
@@ -75,17 +93,22 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
 
   const executionStats = useMemo(() => {
     if (!executions.length) return { total: 0, success: 0, failed: 0, running: 0, pending: 0 }
+    
+    // Helper function to normalize status for comparison
+    const normalizeStatus = (status: string) => status.toLowerCase()
+    
     return {
       total: executions.length,
-      success: executions.filter(e => e.status === 'success').length,
-      failed: executions.filter(e => e.status === 'failed').length,
-      running: executions.filter(e => e.status === 'running').length,
-      pending: executions.filter(e => e.status === 'pending').length
+      success: executions.filter(e => normalizeStatus(e.status) === 'success').length,
+      failed: executions.filter(e => normalizeStatus(e.status) === 'failed').length,
+      running: executions.filter(e => normalizeStatus(e.status) === 'running').length,
+      pending: executions.filter(e => normalizeStatus(e.status) === 'pending').length
     }
   }, [executions])
 
   const getStatusIcon = (status: Execution['status']) => {
-    switch (status) {
+    const normalizedStatus = status?.toLowerCase()
+    switch (normalizedStatus) {
       case 'success':
         return <CheckCircle2 className="h-4 w-4 text-green-500" />
       case 'failed':
@@ -100,7 +123,8 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
   }
 
   const getStatusVariant = (status: Execution['status']) => {
-    switch (status) {
+    const normalizedStatus = status?.toLowerCase()
+    switch (normalizedStatus) {
       case 'success':
         return 'default'
       case 'failed':
@@ -224,15 +248,16 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
               
               setIsRunning(true);
               try {
+                // Generate random status instead of always 'pending'
+                const randomStatus = getRandomStatus();
+                
                 // Create a new execution
                 const response = await fetch('/api/executions', {
                   method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
+                  headers: getAuthHeaders(),
                   body: JSON.stringify({
                     agentId: agentId,
-                    status: 'PENDING'
+                    status: randomStatus.toUpperCase()
                   })
                 });
                 
@@ -286,43 +311,128 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
       </Card>
 
       {/* Execution Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Executions</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{executionStats.total}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Successful</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{executionStats.success}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Failed</CardTitle>
-            <XCircle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{executionStats.failed}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Running</CardTitle>
-            <RefreshCw className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{executionStats.running}</div>
-          </CardContent>
-        </Card>
+      <div className="space-y-4">
+        {/* Stats Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="border-l-4 border-l-gray-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Total Executions</CardTitle>
+              <Clock className="h-4 w-4 text-gray-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">{executionStats.total}</div>
+              <p className="text-xs text-gray-500 mt-1">
+                All time executions
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-l-4 border-l-green-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-green-700">Successful</CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{executionStats.success}</div>
+              <p className="text-xs text-green-600 mt-1">
+                {executionStats.total > 0 
+                  ? `${Math.round((executionStats.success / executionStats.total) * 100)}% success rate`
+                  : 'No executions yet'
+                }
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-l-4 border-l-red-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-red-700">Failed</CardTitle>
+              <XCircle className="h-4 w-4 text-red-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">{executionStats.failed}</div>
+              <p className="text-xs text-red-600 mt-1">
+                {executionStats.total > 0 
+                  ? `${Math.round((executionStats.failed / executionStats.total) * 100)}% failure rate`
+                  : 'No failures'
+                }
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-l-4 border-l-blue-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-blue-700">Running/Pending</CardTitle>
+              <RefreshCw className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">
+                {executionStats.running + executionStats.pending}
+              </div>
+              <p className="text-xs text-blue-600 mt-1">
+                {executionStats.running} running, {executionStats.pending} pending
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Status Distribution Bar */}
+        {executionStats.total > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">Execution Status Distribution</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex h-2 bg-gray-200 rounded-full overflow-hidden">
+                {executionStats.success > 0 && (
+                  <div 
+                    className="bg-green-500 h-full"
+                    style={{ width: `${(executionStats.success / executionStats.total) * 100}%` }}
+                    title={`${executionStats.success} successful (${Math.round((executionStats.success / executionStats.total) * 100)}%)`}
+                  />
+                )}
+                {executionStats.failed > 0 && (
+                  <div 
+                    className="bg-red-500 h-full"
+                    style={{ width: `${(executionStats.failed / executionStats.total) * 100}%` }}
+                    title={`${executionStats.failed} failed (${Math.round((executionStats.failed / executionStats.total) * 100)}%)`}
+                  />
+                )}
+                {executionStats.running > 0 && (
+                  <div 
+                    className="bg-blue-500 h-full"
+                    style={{ width: `${(executionStats.running / executionStats.total) * 100}%` }}
+                    title={`${executionStats.running} running (${Math.round((executionStats.running / executionStats.total) * 100)}%)`}
+                  />
+                )}
+                {executionStats.pending > 0 && (
+                  <div 
+                    className="bg-yellow-500 h-full"
+                    style={{ width: `${(executionStats.pending / executionStats.total) * 100}%` }}
+                    title={`${executionStats.pending} pending (${Math.round((executionStats.pending / executionStats.total) * 100)}%)`}
+                  />
+                )}
+              </div>
+              <div className="flex justify-between text-xs text-gray-500 mt-2">
+                <span className="flex items-center">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                  Success ({executionStats.success})
+                </span>
+                <span className="flex items-center">
+                  <div className="w-2 h-2 bg-red-500 rounded-full mr-1"></div>
+                  Failed ({executionStats.failed})
+                </span>
+                <span className="flex items-center">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
+                  Running ({executionStats.running})
+                </span>
+                <span className="flex items-center">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full mr-1"></div>
+                  Pending ({executionStats.pending})
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Execution History */}
@@ -349,25 +459,23 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
                 </SelectContent>
               </Select>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-4">
                 <Label htmlFor="start-from" className="text-sm">From:</Label>
-                <Input
-                  id="start-from"
-                  type="datetime-local"
-                  value={startTimeFrom}
-                  onChange={(e) => setStartTimeFrom(e.target.value)}
-                  className="w-[200px]"
+                <DateTimePicker
+                  date={startTimeFrom}
+                  onDateChange={setStartTimeFrom}
+                  placeholder="Select start date"
+                  className="w-auto"
                 />
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-4">
                 <Label htmlFor="start-to" className="text-sm">To:</Label>
-                <Input
-                  id="start-to"
-                  type="datetime-local"
-                  value={startTimeTo}
-                  onChange={(e) => setStartTimeTo(e.target.value)}
-                  className="w-[200px]"
+                <DateTimePicker
+                  date={startTimeTo}
+                  onDateChange={setStartTimeTo}
+                  placeholder="Select end date"
+                  className="w-auto"
                 />
               </div>
               
@@ -376,8 +484,8 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
                   variant="outline" 
                   size="sm"
                   onClick={() => {
-                    setStartTimeFrom('')
-                    setStartTimeTo('')
+                    setStartTimeFrom(undefined)
+                    setStartTimeTo(undefined)
                   }}
                 >
                   Clear Filters
@@ -450,14 +558,15 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
                           
                           setIsRunning(true);
                           try {
+                            // Generate random status instead of always 'pending'
+                            const randomStatus = getRandomStatus();
+                            
                             const response = await fetch('/api/executions', {
                               method: 'POST',
-                              headers: {
-                                'Content-Type': 'application/json',
-                              },
+                              headers: getAuthHeaders(),
                               body: JSON.stringify({
                                 agentId: agentId,
-                                status: 'PENDING'
+                                status: randomStatus.toUpperCase()
                               })
                             });
                             
@@ -593,14 +702,15 @@ export function AgentExecution({ agentId, onViewFlowchart, onBack }: AgentExecut
                           
                           setIsRunning(true);
                           try {
+                            // Generate random status instead of always 'pending'
+                            const randomStatus = getRandomStatus();
+                            
                             const response = await fetch('/api/executions', {
                               method: 'POST',
-                              headers: {
-                                'Content-Type': 'application/json',
-                              },
+                              headers: getAuthHeaders(),
                               body: JSON.stringify({
                                 agentId: agentId,
-                                status: 'PENDING'
+                                status: randomStatus.toUpperCase()
                               })
                             });
                             
