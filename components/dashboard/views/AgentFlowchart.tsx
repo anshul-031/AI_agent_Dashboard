@@ -31,6 +31,7 @@ import { FlowchartNode, FlowchartConnection, Flowchart } from '@/types/agent'
 
 interface AgentFlowchartProps {
   agentId: string | null
+  onAgentSelect?: (agentId: string) => void
 }
 
 interface SaveState {
@@ -39,7 +40,7 @@ interface SaveState {
   hasUnsavedChanges: boolean
 }
 
-export function AgentFlowchart({ agentId }: AgentFlowchartProps) {
+export function AgentFlowchart({ agentId, onAgentSelect }: AgentFlowchartProps) {
   const [editMode, setEditMode] = useState(false)
   const [selectedNode, setSelectedNode] = useState<FlowchartNode | null>(null)
   const [saveState, setSaveState] = useState<SaveState>({
@@ -237,14 +238,56 @@ export function AgentFlowchart({ agentId }: AgentFlowchartProps) {
 
   if (!agent) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <GitBranch className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h3 className="mt-2 text-sm font-semibold">No agent selected</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Please select an agent to view its flowchart
-          </p>
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Agent Flowchart</h2>
+          <p className="text-muted-foreground">Visual workflow representation</p>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <GitBranch className="mr-2 h-5 w-5" />
+              Select an Agent
+            </CardTitle>
+            <CardDescription>
+              Choose an agent to view or edit its flowchart
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {mockAgents.map((agentOption) => (
+                <Card 
+                  key={agentOption.id} 
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => onAgentSelect?.(agentOption.id)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-sm">{agentOption.name}</h4>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {agentOption.description}
+                        </p>
+                      </div>
+                      <Badge 
+                        variant={agentOption.status === 'Running' ? 'default' : 
+                                agentOption.status === 'Idle' ? 'secondary' : 'destructive'}
+                        className="ml-2 text-xs"
+                      >
+                        {agentOption.status}
+                      </Badge>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{agentOption.category}</span>
+                      <span>{agentOption.executionCount} runs</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
