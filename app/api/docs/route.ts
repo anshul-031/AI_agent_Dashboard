@@ -5,7 +5,8 @@ import { swaggerSpec } from '@/lib/swagger';
  * @swagger
  * /api/docs:
  *   get:
- *     summary: Get API documentation in OpenAPI format
+ *     summary: Get live API documentation in OpenAPI 3.0 specification format
+ *     description: Returns the complete OpenAPI spec with auto-updated endpoint documentation, schemas, and examples
  *     tags: [Documentation]
  *     responses:
  *       200:
@@ -16,5 +17,12 @@ import { swaggerSpec } from '@/lib/swagger';
  *               type: object
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  return NextResponse.json(swaggerSpec);
+  const response = NextResponse.json(swaggerSpec);
+  
+  // Add CORS headers for documentation access
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+  
+  return response;
 }

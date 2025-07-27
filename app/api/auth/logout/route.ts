@@ -5,7 +5,8 @@ import { withSecurity } from '@/lib/middleware';
  * @swagger
  * /api/auth/logout:
  *   post:
- *     summary: Logout user and clear authentication token
+ *     summary: Terminate user session and invalidate authentication token
+ *     description: Securely logs out user by clearing session tokens and invalidating access
  *     tags: [Authentication]
  *     security:
  *       - bearerAuth: []

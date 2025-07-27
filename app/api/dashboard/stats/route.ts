@@ -6,7 +6,8 @@ import { withAuth, withSecurity, withRateLimit, composeMiddleware, Authenticated
  * @swagger
  * /api/dashboard/stats:
  *   get:
- *     summary: Get dashboard statistics
+ *     summary: Get comprehensive dashboard analytics and performance metrics
+ *     description: Retrieves real-time statistics including agent counts, execution rates, success metrics, and performance data
  *     tags: [Dashboard]
  *     security:
  *       - bearerAuth: []

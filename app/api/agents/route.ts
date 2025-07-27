@@ -9,7 +9,8 @@ import { AGENT_STATUS, AGENT_STATUS_OPTIONS, type AgentStatus } from '@/lib/cons
  * @swagger
  * /api/agents:
  *   get:
- *     summary: Get all agents with filtering options
+ *     summary: Retrieve all AI agents with advanced filtering and search capabilities
+ *     description: Fetches paginated list of agents with filtering by status, category, creator, and text search
  *     tags: [Agents]
  *     security:
  *       - bearerAuth: []
@@ -96,7 +97,8 @@ async function getAgentsHandler(request: AuthenticatedRequest): Promise<NextResp
  * @swagger
  * /api/agents:
  *   post:
- *     summary: Create a new agent
+ *     summary: Create and configure a new AI agent with custom settings
+ *     description: Creates a new agent with specified configuration, status, and workflow parameters
  *     tags: [Agents]
  *     security:
  *       - bearerAuth: []

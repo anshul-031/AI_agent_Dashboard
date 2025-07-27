@@ -6,16 +6,46 @@ const options = {
     info: {
       title: 'AI Agent Dashboard API',
       version: '1.0.0',
-      description: 'RESTful API for managing AI agents, executions, and workflows',
+      description: 'RESTful API for managing AI agents, executions, and workflows with comprehensive monitoring and control capabilities',
       contact: {
         name: 'API Support',
         email: 'support@company.com',
+      },
+      license: {
+        name: 'MIT',
+        url: 'https://opensource.org/licenses/MIT',
       },
     },
     servers: [
       {
         url: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
         description: 'Development server',
+      },
+    ],
+    tags: [
+      {
+        name: 'Authentication',
+        description: 'User authentication and session management endpoints',
+      },
+      {
+        name: 'Agents',
+        description: 'AI agent creation, management, and configuration endpoints',
+      },
+      {
+        name: 'Executions',
+        description: 'Agent execution monitoring, logging, and control endpoints',
+      },
+      {
+        name: 'Dashboard',
+        description: 'Dashboard statistics and analytics endpoints',
+      },
+      {
+        name: 'Flowcharts',
+        description: 'Agent workflow and flowchart visualization endpoints',
+      },
+      {
+        name: 'Documentation',
+        description: 'API documentation and collection generation endpoints',
       },
     ],
     components: {

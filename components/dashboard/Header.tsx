@@ -11,8 +11,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Bell, Settings, LogOut, Bot } from 'lucide-react'
+import { Bell, Settings, LogOut, Bot, BookOpen } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
 
 export function Header() {
   const { user, logout } = useAuth()
@@ -28,6 +29,13 @@ export function Header() {
         </div>
 
         <div className="flex items-center space-x-4">
+          <Link href="/docs" target="_blank">
+            <Button variant="ghost" size="sm" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              API Docs
+            </Button>
+          </Link>
+          
           <Button variant="ghost" size="sm" className="relative">
             <Bell className="h-4 w-4" />
             <Badge 

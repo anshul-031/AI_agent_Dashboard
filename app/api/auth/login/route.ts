@@ -15,7 +15,8 @@ const prisma = new PrismaClient();
  * @swagger
  * /api/auth/login:
  *   post:
- *     summary: Authenticate user and return JWT token
+ *     summary: Authenticate user credentials and return JWT access token
+ *     description: Validates user email and password, returns JWT token for authenticated sessions
  *     tags: [Authentication]
  *     requestBody:
  *       required: true

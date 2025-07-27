@@ -1,0 +1,187 @@
+/* Swagger UI Custom Styles */
+.swagger-ui-container {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.swagger-ui .topbar {
+  display: none;
+}
+
+.swagger-ui .info {
+  margin: 20px 0;
+}
+
+.swagger-ui .info .title {
+  font-size: 2rem;
+  color: hsl(var(--foreground));
+}
+
+.swagger-ui .info .description {
+  color: hsl(var(--muted-foreground));
+  margin: 10px 0;
+}
+
+.swagger-ui .scheme-container {
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  padding: 15px;
+  margin: 20px 0;
+}
+
+.swagger-ui .opblock-tag {
+  font-size: 1.2rem;
+  color: hsl(var(--foreground));
+  margin: 20px 0 10px 0;
+  border-bottom: 1px solid hsl(var(--border));
+  padding-bottom: 5px;
+}
+
+.swagger-ui .opblock {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  margin: 10px 0;
+}
+
+.swagger-ui .opblock.opblock-get {
+  border-left: 4px solid #61affe;
+}
+
+.swagger-ui .opblock.opblock-post {
+  border-left: 4px solid #49cc90;
+}
+
+.swagger-ui .opblock.opblock-put {
+  border-left: 4px solid #fca130;
+}
+
+.swagger-ui .opblock.opblock-delete {
+  border-left: 4px solid #f93e3e;
+}
+
+.swagger-ui .opblock-summary {
+  color: hsl(var(--foreground));
+  padding: 15px;
+}
+
+.swagger-ui .opblock-summary-method {
+  font-weight: 700;
+  min-width: 80px;
+  padding: 6px 15px;
+  text-align: center;
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+}
+
+.swagger-ui .opblock-summary-path {
+  color: hsl(var(--foreground));
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.swagger-ui .opblock-description-wrapper {
+  background: hsl(var(--muted));
+  border-top: 1px solid hsl(var(--border));
+  padding: 15px;
+}
+
+.swagger-ui .parameters-col_description {
+  color: hsl(var(--muted-foreground));
+}
+
+.swagger-ui .response-col_description {
+  color: hsl(var(--muted-foreground));
+}
+
+.swagger-ui .btn {
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.swagger-ui .btn.try-out__btn {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: 1px solid hsl(var(--primary));
+}
+
+.swagger-ui .btn.try-out__btn:hover {
+  background: hsl(var(--primary) / 0.9);
+}
+
+.swagger-ui .btn.execute {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: 1px solid hsl(var(--primary));
+}
+
+.swagger-ui .btn.execute:hover {
+  background: hsl(var(--primary) / 0.9);
+}
+
+.swagger-ui input[type="text"],
+.swagger-ui input[type="password"],
+.swagger-ui input[type="email"],
+.swagger-ui textarea,
+.swagger-ui select {
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+  color: hsl(var(--foreground));
+  padding: 8px 12px;
+}
+
+.swagger-ui input[type="text"]:focus,
+.swagger-ui input[type="password"]:focus,
+.swagger-ui input[type="email"]:focus,
+.swagger-ui textarea:focus,
+.swagger-ui select:focus {
+  border-color: hsl(var(--ring));
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+}
+
+.swagger-ui .highlight-code {
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+}
+
+.swagger-ui .response-content-type {
+  color: hsl(var(--muted-foreground));
+}
+
+.swagger-ui .responses-inner {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+}
+
+.swagger-ui .authorization__btn {
+  background: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-weight: 600;
+}
+
+.swagger-ui .authorization__btn:hover {
+  background: hsl(var(--secondary) / 0.8);
+}
+
+.swagger-ui .model-box {
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+}
+
+.swagger-ui .model .property-row {
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.swagger-ui .model .property-row:last-child {
+  border-bottom: none;
+}

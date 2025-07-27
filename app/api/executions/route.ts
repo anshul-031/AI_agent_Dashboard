@@ -9,7 +9,8 @@ type ExecutionStatus = 'SUCCESS' | 'FAILED' | 'RUNNING';
  * @swagger
  * /api/executions:
  *   get:
- *     summary: Get executions with filtering options
+ *     summary: Retrieve agent execution history with comprehensive filtering options
+ *     description: Gets paginated execution records with filtering by agent, status, date range, and search
  *     tags: [Executions]
  *     security:
  *       - bearerAuth: []
@@ -124,7 +125,8 @@ async function getExecutionsHandler(request: AuthenticatedRequest): Promise<Next
  * @swagger
  * /api/executions:
  *   post:
- *     summary: Create a new execution
+ *     summary: Trigger a new agent execution with optional parameters and configurations
+ *     description: Initiates agent execution with custom parameters, monitoring, and logging capabilities
  *     tags: [Executions]
  *     security:
  *       - bearerAuth: []
