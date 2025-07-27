@@ -139,17 +139,37 @@ async function createFlowchartHandler(
       );
     }
 
-    const flowchart = await db.createFlowchart({
+    // Validate flowchart data
+    const validation = await db.validateFlowchart(body);
+    if (!validation.valid) {
+      return NextResponse.json(
+        { error: 'Invalid flowchart data', details: validation.errors },
+        { status: 400 }
+      );
+    }
+
+    // Set defaults for enhanced schema
+    const flowchartData = {
       agentId: params.id,
       version: body.version || '1.0.0',
       nodes: body.nodes || [],
       connections: body.connections || [],
+      layout: body.layout || {
+        canvasSize: { width: 1200, height: 800 },
+        zoom: 1,
+        pan: { x: 0, y: 0 },
+        gridSize: 20,
+        snapToGrid: true
+      },
       metadata: body.metadata || {
         title: `${agent.name} Flowchart`,
         description: 'Agent execution flowchart',
-        layout: 'default'
+        layoutVersion: 'v2.0',
+        tags: []
       }
-    });
+    };
+
+    const flowchart = await db.createFlowchart(flowchartData);
 
     return NextResponse.json({ flowchart }, { status: 201 });
   } catch (error) {
@@ -205,6 +225,7 @@ async function updateFlowchartHandler(
     await db.initialize();
     
     const body = await request.json();
+    const userId = request.user?.id;
     
     const flowchart = await db.getFlowchartByAgentId(params.id);
     if (!flowchart) {
@@ -214,10 +235,32 @@ async function updateFlowchartHandler(
       );
     }
 
-    const updated = await db.updateFlowchart(flowchart.id, {
-      ...body,
-      lastModified: new Date().toISOString(),
-    });
+    // Validate flowchart data if provided
+    if (body.nodes || body.connections) {
+      const validation = await db.validateFlowchart({
+        nodes: body.nodes || flowchart.nodes,
+        connections: body.connections || flowchart.connections
+      });
+      
+      if (!validation.valid) {
+        return NextResponse.json(
+          { error: 'Invalid flowchart data', details: validation.errors },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Determine the action for audit log
+    let action = 'updated';
+    if (body.nodes && body.nodes.length !== flowchart.nodes.length) {
+      action = body.nodes.length > flowchart.nodes.length ? 'nodes_added' : 'nodes_removed';
+    } else if (body.connections && body.connections.length !== flowchart.connections.length) {
+      action = body.connections.length > flowchart.connections.length ? 'connections_added' : 'connections_removed';
+    } else if (body.layout) {
+      action = 'layout_updated';
+    }
+
+    const updated = await db.updateFlowchart(flowchart.id, body, userId, action);
     
     if (!updated) {
       return NextResponse.json(
@@ -227,7 +270,10 @@ async function updateFlowchartHandler(
     }
 
     const updatedFlowchart = await db.getFlowchartByAgentId(params.id);
-    return NextResponse.json({ flowchart: updatedFlowchart });
+    return NextResponse.json({ 
+      flowchart: updatedFlowchart,
+      message: 'Flowchart saved successfully'
+    });
   } catch (error) {
     console.error('Error updating flowchart:', error);
     return NextResponse.json(

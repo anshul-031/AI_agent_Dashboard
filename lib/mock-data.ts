@@ -570,9 +570,15 @@ export const mockFlowcharts: Flowchart[] = [
         type: 'start',
         title: 'Incoming Inquiry',
         description: 'Customer submits support ticket',
-        position: { x: 50, y: 50 },
+        position: { x: 50, y: 50, z: 1 },
+        size: { width: 160, height: 80 },
         config: {
           channels: ['email', 'chat', 'phone']
+        },
+        chronology: {
+          order: 1,
+          createdAt: '2024-01-15T09:00:00Z',
+          updatedAt: '2024-01-15T09:00:00Z'
         }
       },
       {
@@ -580,10 +586,16 @@ export const mockFlowcharts: Flowchart[] = [
         type: 'process',
         title: 'Parse Intent',
         description: 'Analyze inquiry to determine customer intent',
-        position: { x: 300, y: 50 },
+        position: { x: 300, y: 50, z: 2 },
+        size: { width: 160, height: 80 },
         config: {
           nlpModel: 'bert-base-uncased',
           confidence_threshold: 0.8
+        },
+        chronology: {
+          order: 2,
+          createdAt: '2024-01-15T09:01:00Z',
+          updatedAt: '2024-01-15T09:01:00Z'
         }
       },
       {
@@ -591,9 +603,15 @@ export const mockFlowcharts: Flowchart[] = [
         type: 'decision',
         title: 'Can Auto-Resolve?',
         description: 'Check if inquiry can be handled automatically',
-        position: { x: 550, y: 50 },
+        position: { x: 550, y: 50, z: 3 },
+        size: { width: 160, height: 80 },
         config: {
           criteria: ['faq_match', 'simple_query', 'account_lookup']
+        },
+        chronology: {
+          order: 3,
+          createdAt: '2024-01-15T09:02:00Z',
+          updatedAt: '2024-01-15T09:02:00Z'
         }
       },
       {
@@ -601,10 +619,16 @@ export const mockFlowcharts: Flowchart[] = [
         type: 'process',
         title: 'Generate Response',
         description: 'Create automated response',
-        position: { x: 300, y: 200 },
+        position: { x: 300, y: 200, z: 4 },
+        size: { width: 160, height: 80 },
         config: {
           template_engine: 'mustache',
           personalization: true
+        },
+        chronology: {
+          order: 4,
+          createdAt: '2024-01-15T09:03:00Z',
+          updatedAt: '2024-01-15T09:03:00Z'
         }
       },
       {
@@ -612,10 +636,16 @@ export const mockFlowcharts: Flowchart[] = [
         type: 'process',
         title: 'Escalate to Human',
         description: 'Route to appropriate human agent',
-        position: { x: 800, y: 50 },
+        position: { x: 800, y: 50, z: 5 },
+        size: { width: 160, height: 80 },
         config: {
           routing_rules: 'skill_based',
           priority_levels: ['high', 'medium', 'low']
+        },
+        chronology: {
+          order: 5,
+          createdAt: '2024-01-15T09:04:00Z',
+          updatedAt: '2024-01-15T09:04:00Z'
         }
       },
       {
@@ -623,7 +653,13 @@ export const mockFlowcharts: Flowchart[] = [
         type: 'end',
         title: 'Response Sent',
         description: 'Customer receives response',
-        position: { x: 550, y: 200 }
+        position: { x: 550, y: 200, z: 6 },
+        size: { width: 160, height: 80 },
+        chronology: {
+          order: 6,
+          createdAt: '2024-01-15T09:05:00Z',
+          updatedAt: '2024-01-15T09:05:00Z'
+        }
       }
     ],
     connections: [
@@ -631,47 +667,107 @@ export const mockFlowcharts: Flowchart[] = [
         id: 'conn-1',
         from: 'start-1',
         to: 'process-1',
-        label: 'New inquiry'
+        label: 'New inquiry',
+        path: { type: 'straight' },
+        chronology: {
+          order: 1,
+          createdAt: '2024-01-15T09:06:00Z',
+          updatedAt: '2024-01-15T09:06:00Z'
+        }
       },
       {
         id: 'conn-2',
         from: 'process-1',
         to: 'decision-1',
-        label: 'Intent parsed'
+        label: 'Intent parsed',
+        path: { type: 'straight' },
+        chronology: {
+          order: 2,
+          createdAt: '2024-01-15T09:07:00Z',
+          updatedAt: '2024-01-15T09:07:00Z'
+        }
       },
       {
         id: 'conn-3',
         from: 'decision-1',
         to: 'process-2',
         label: 'Yes',
-        condition: 'confidence > 0.8'
+        condition: 'confidence > 0.8',
+        path: { type: 'curved' },
+        chronology: {
+          order: 3,
+          createdAt: '2024-01-15T09:08:00Z',
+          updatedAt: '2024-01-15T09:08:00Z'
+        }
       },
       {
         id: 'conn-4',
         from: 'decision-1',
         to: 'process-3',
         label: 'No',
-        condition: 'confidence <= 0.8'
+        condition: 'confidence <= 0.8',
+        path: { type: 'straight' },
+        chronology: {
+          order: 4,
+          createdAt: '2024-01-15T09:09:00Z',
+          updatedAt: '2024-01-15T09:09:00Z'
+        }
       },
       {
         id: 'conn-5',
         from: 'process-2',
         to: 'end-1',
-        label: 'Auto-response'
+        label: 'Auto-response',
+        path: { type: 'straight' },
+        chronology: {
+          order: 5,
+          createdAt: '2024-01-15T09:10:00Z',
+          updatedAt: '2024-01-15T09:10:00Z'
+        }
       },
       {
         id: 'conn-6',
         from: 'process-3',
         to: 'end-1',
-        label: 'Escalated'
+        label: 'Escalated',
+        path: { type: 'curved' },
+        chronology: {
+          order: 6,
+          createdAt: '2024-01-15T09:11:00Z',
+          updatedAt: '2024-01-15T09:11:00Z'
+        }
       }
     ],
+    layout: {
+      canvasSize: { width: 1200, height: 600 },
+      zoom: 1,
+      pan: { x: 0, y: 0 },
+      gridSize: 20,
+      snapToGrid: true
+    },
     metadata: {
       title: 'Customer Support Workflow',
       description: 'Automated customer inquiry processing with human escalation',
-      layout: 'flowchart-v1'
+      layoutVersion: 'v2.0',
+      tags: ['customer-support', 'automation', 'escalation']
     },
-    lastModified: '2024-01-15T10:30:00Z'
+    chronology: {
+      createdAt: '2024-01-15T09:00:00Z',
+      lastModified: '2024-01-15T10:30:00Z',
+      version: '1.2.0',
+      changeLog: [
+        {
+          timestamp: '2024-01-15T09:00:00Z',
+          action: 'created',
+          details: 'Initial flowchart creation'
+        },
+        {
+          timestamp: '2024-01-15T10:30:00Z',
+          action: 'layout_updated',
+          details: 'Adjusted node positions for better visualization'
+        }
+      ]
+    }
   },
   {
     id: 'flow-2',
@@ -683,10 +779,16 @@ export const mockFlowcharts: Flowchart[] = [
         type: 'start',
         title: 'Data Input',
         description: 'Receive dataset for analysis',
-        position: { x: 50, y: 50 },
+        position: { x: 50, y: 50, z: 1 },
+        size: { width: 160, height: 80 },
         config: {
           input_formats: ['csv', 'json', 'parquet'],
           max_size: '1GB'
+        },
+        chronology: {
+          order: 1,
+          createdAt: '2024-01-10T08:00:00Z',
+          updatedAt: '2024-01-10T08:00:00Z'
         }
       },
       {
@@ -694,11 +796,17 @@ export const mockFlowcharts: Flowchart[] = [
         type: 'process',
         title: 'Data Validation',
         description: 'Validate data quality and format',
-        position: { x: 300, y: 50 },
+        position: { x: 300, y: 50, z: 2 },
+        size: { width: 160, height: 80 },
         config: {
           schema_validation: true,
           null_threshold: 0.1,
           duplicate_check: true
+        },
+        chronology: {
+          order: 2,
+          createdAt: '2024-01-10T08:01:00Z',
+          updatedAt: '2024-01-10T08:01:00Z'
         }
       },
       {
@@ -706,18 +814,30 @@ export const mockFlowcharts: Flowchart[] = [
         type: 'decision',
         title: 'Data Quality OK?',
         description: 'Check if data meets quality standards',
-        position: { x: 550, y: 50 }
+        position: { x: 550, y: 50, z: 3 },
+        size: { width: 160, height: 80 },
+        chronology: {
+          order: 3,
+          createdAt: '2024-01-10T08:02:00Z',
+          updatedAt: '2024-01-10T08:02:00Z'
+        }
       },
       {
         id: 'process-5',
         type: 'process',
         title: 'Data Preprocessing',
         description: 'Clean and prepare data for analysis',
-        position: { x: 300, y: 200 },
+        position: { x: 300, y: 200, z: 4 },
+        size: { width: 160, height: 80 },
         config: {
           missing_value_strategy: 'interpolation',
           outlier_detection: 'iqr',
           normalization: 'z-score'
+        },
+        chronology: {
+          order: 4,
+          createdAt: '2024-01-10T08:03:00Z',
+          updatedAt: '2024-01-10T08:03:00Z'
         }
       },
       {
@@ -725,10 +845,16 @@ export const mockFlowcharts: Flowchart[] = [
         type: 'process',
         title: 'Statistical Analysis',
         description: 'Perform statistical computations',
-        position: { x: 550, y: 200 },
+        position: { x: 550, y: 200, z: 5 },
+        size: { width: 160, height: 80 },
         config: {
           methods: ['correlation', 'regression', 'clustering'],
           significance_level: 0.05
+        },
+        chronology: {
+          order: 5,
+          createdAt: '2024-01-10T08:04:00Z',
+          updatedAt: '2024-01-10T08:04:00Z'
         }
       },
       {
@@ -736,11 +862,17 @@ export const mockFlowcharts: Flowchart[] = [
         type: 'process',
         title: 'Generate Report',
         description: 'Create analysis report and visualizations',
-        position: { x: 800, y: 200 },
+        position: { x: 800, y: 200, z: 6 },
+        size: { width: 160, height: 80 },
         config: {
           report_format: 'html',
           include_charts: true,
           export_data: true
+        },
+        chronology: {
+          order: 6,
+          createdAt: '2024-01-10T08:05:00Z',
+          updatedAt: '2024-01-10T08:05:00Z'
         }
       },
       {
@@ -748,7 +880,13 @@ export const mockFlowcharts: Flowchart[] = [
         type: 'end',
         title: 'Analysis Complete',
         description: 'Results delivered',
-        position: { x: 800, y: 50 }
+        position: { x: 800, y: 50, z: 7 },
+        size: { width: 160, height: 80 },
+        chronology: {
+          order: 7,
+          createdAt: '2024-01-10T08:06:00Z',
+          updatedAt: '2024-01-10T08:06:00Z'
+        }
       }
     ],
     connections: [
@@ -756,52 +894,118 @@ export const mockFlowcharts: Flowchart[] = [
         id: 'conn-7',
         from: 'start-2',
         to: 'process-4',
-        label: 'Dataset received'
+        label: 'Dataset received',
+        path: { type: 'straight' },
+        chronology: {
+          order: 1,
+          createdAt: '2024-01-10T08:07:00Z',
+          updatedAt: '2024-01-10T08:07:00Z'
+        }
       },
       {
         id: 'conn-8',
         from: 'process-4',
         to: 'decision-2',
-        label: 'Validation complete'
+        label: 'Validation complete',
+        path: { type: 'straight' },
+        chronology: {
+          order: 2,
+          createdAt: '2024-01-10T08:08:00Z',
+          updatedAt: '2024-01-10T08:08:00Z'
+        }
       },
       {
         id: 'conn-9',
         from: 'decision-2',
         to: 'process-5',
         label: 'Valid',
-        condition: 'quality_score > 0.8'
+        condition: 'quality_score > 0.8',
+        path: { type: 'curved' },
+        chronology: {
+          order: 3,
+          createdAt: '2024-01-10T08:09:00Z',
+          updatedAt: '2024-01-10T08:09:00Z'
+        }
       },
       {
         id: 'conn-10',
         from: 'decision-2',
         to: 'end-2',
         label: 'Invalid',
-        condition: 'quality_score <= 0.8'
+        condition: 'quality_score <= 0.8',
+        path: { type: 'straight' },
+        chronology: {
+          order: 4,
+          createdAt: '2024-01-10T08:10:00Z',
+          updatedAt: '2024-01-10T08:10:00Z'
+        }
       },
       {
         id: 'conn-11',
         from: 'process-5',
         to: 'process-6',
-        label: 'Data prepared'
+        label: 'Data prepared',
+        path: { type: 'straight' },
+        chronology: {
+          order: 5,
+          createdAt: '2024-01-10T08:11:00Z',
+          updatedAt: '2024-01-10T08:11:00Z'
+        }
       },
       {
         id: 'conn-12',
         from: 'process-6',
         to: 'process-7',
-        label: 'Analysis done'
+        label: 'Analysis done',
+        path: { type: 'straight' },
+        chronology: {
+          order: 6,
+          createdAt: '2024-01-10T08:12:00Z',
+          updatedAt: '2024-01-10T08:12:00Z'
+        }
       },
       {
         id: 'conn-13',
         from: 'process-7',
         to: 'end-2',
-        label: 'Report generated'
+        label: 'Report generated',
+        path: { type: 'curved' },
+        chronology: {
+          order: 7,
+          createdAt: '2024-01-10T08:13:00Z',
+          updatedAt: '2024-01-10T08:13:00Z'
+        }
       }
     ],
+    layout: {
+      canvasSize: { width: 1200, height: 600 },
+      zoom: 0.9,
+      pan: { x: 20, y: 10 },
+      gridSize: 25,
+      snapToGrid: true
+    },
     metadata: {
       title: 'Data Analysis Pipeline',
       description: 'End-to-end data processing and analysis workflow',
-      layout: 'flowchart-v1'
+      layoutVersion: 'v2.0',
+      tags: ['data-analysis', 'statistics', 'automation']
     },
-    lastModified: '2024-01-12T14:45:00Z'
+    chronology: {
+      createdAt: '2024-01-10T08:00:00Z',
+      lastModified: '2024-01-12T14:45:00Z',
+      version: '2.1.0',
+      changeLog: [
+        {
+          timestamp: '2024-01-10T08:00:00Z',
+          action: 'created',
+          details: 'Initial data analysis flowchart creation'
+        },
+        {
+          timestamp: '2024-01-12T14:45:00Z',
+          action: 'layout_updated',
+          details: 'Optimized workflow for better processing'
+        }
+      ]
+    }
   }
 ]

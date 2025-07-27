@@ -23,7 +23,7 @@ type ExecutionStatus = 'SUCCESS' | 'FAILED' | 'RUNNING';
  *         name: status
  *         schema:
  *           type: string
- *           enum: [SUCCESS, FAILED, RUNNING, PENDING]
+ *           enum: [SUCCESS, FAILED, RUNNING]
  *         description: Filter by execution status
  *       - in: query
  *         name: startTimeFrom
@@ -142,8 +142,8 @@ async function getExecutionsHandler(request: AuthenticatedRequest): Promise<Next
  *                 example: "clxxx123456789"
  *               status:
  *                 type: string
- *                 enum: [SUCCESS, FAILED, RUNNING, PENDING]
- *                 example: "PENDING"
+ *                 enum: [SUCCESS, FAILED, RUNNING]
+ *                 example: "RUNNING"
  *               result:
  *                 type: string
  *                 example: "Process completed successfully"
@@ -190,7 +190,7 @@ async function createExecutionHandler(request: AuthenticatedRequest): Promise<Ne
       },
       status: {
         type: 'string',
-        enum: ['SUCCESS', 'FAILED', 'RUNNING', 'PENDING']
+        enum: ['SUCCESS', 'FAILED', 'RUNNING']
       }
     });
 

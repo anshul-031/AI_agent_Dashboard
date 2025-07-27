@@ -300,10 +300,11 @@ export class DatabaseService {
     version: string;
     nodes: any[];
     connections: any[];
+    layout: any;
     metadata: {
       title: string;
       description: string;
-      layout: string;
+      layoutVersion: string;
     };
   }) {
     const flowchartService = await this.getFlowchartService();
@@ -315,14 +316,29 @@ export class DatabaseService {
     return await flowchartService.getFlowchartByAgentId(agentId);
   }
 
-  async updateFlowchart(id: string, updates: Partial<Flowchart>) {
+  async updateFlowchart(id: string, updates: Partial<Flowchart>, userId?: string, action?: string) {
     const flowchartService = await this.getFlowchartService();
-    return await flowchartService.updateFlowchart(id, updates);
+    return await flowchartService.updateFlowchart(id, updates, userId, action);
   }
 
   async deleteFlowchart(id: string) {
     const flowchartService = await this.getFlowchartService();
     return await flowchartService.deleteFlowchart(id);
+  }
+
+  async validateFlowchart(flowchart: Partial<Flowchart>) {
+    const flowchartService = await this.getFlowchartService();
+    return await flowchartService.validateFlowchart(flowchart);
+  }
+
+  async exportFlowchart(id: string) {
+    const flowchartService = await this.getFlowchartService();
+    return await flowchartService.exportFlowchart(id);
+  }
+
+  async duplicateFlowchart(id: string, newAgentId: string, userId?: string) {
+    const flowchartService = await this.getFlowchartService();
+    return await flowchartService.duplicateFlowchart(id, newAgentId, userId);
   }
 
   // Combined operations
